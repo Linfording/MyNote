@@ -14,7 +14,7 @@ public class ServletB extends HttpServlet {
 			throws ServletException, IOException {
 
 		response.setContentType("text/html");
-		response.getWriter().write("servletB....");
+		response.getWriter().write("servletB...."+request.getAttribute("key"));
 	}
 
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
