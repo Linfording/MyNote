@@ -2,7 +2,7 @@ public void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
 		response.setContentType("text/html");
-//		如果不指定reponse的utf-8,浏览器默认接收时使用的也是ISO编码
+//		如果不指定reponse的utf-8,tomcat发送时使用的是默认编码ISO
 		response.setCharacterEncoding("utf-8");
 		response.getWriter().write(new Date().toLocaleString()+"中文");
 //		如果不指定, tomcat服务器默认使用ISO8859-1这个码表来接受客户端发过来的数据
