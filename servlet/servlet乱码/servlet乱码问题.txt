@@ -1,0 +1,41 @@
+	public void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+
+//		response
+//		字符流在发送中文数据时
+//		如果不指定reponse的utf-8,tomcat发送时使用的是默认编码ISO,而浏览器默认使用GBK来接收数据，所以两码不一致造成乱码!
+//		而且ISO不是中文编码，所以浏览器即使使用iso解码也是乱码,
+//		解决方法：
+//		1) 通知服务器使用utf-8来发送数据
+		response.setCharacterEncoding("utf-8");
+//		2) 通知浏览器使用utf-8来接受服务器发送过来的数据
+		response.setContentType("text/html;charset=utf-8");
+		
+		response.getWriter().write(new Date().toLocaleString()+"中文");
+		
+//		字节流发送中文数据时
+//		服务器在发送数据时, 通过getBytes()方法指定发数据用的utf-8, 而浏览器接受默认使用的是GBK, 所以两码不一致造成乱码!!
+//		解决方法：
+//		通知服务器使用utf-8来发送数据
+//		以下两种均可
+//		response.setHeader("Content-Type", "text/html;charset=utf-8");
+//		response.setContentType("text/html;charset=utf-8");
+
+//		request
+//		如果不指定, tomcat服务器默认使用ISO8859-1这个码表来接受客户端发过来的数据
+//		这个方法可以用来通知服务器使用哪一个码表来接受浏览器客户端发送过来的请求实体内容中的数据.
+		request.setCharacterEncoding("utf-8");
+//		可是get方法提交的数据并不奏效，因为上面说了作用范围是请求实体内容中的数据，而get请求是拼接在地址栏的，是在请求头的数据
+//		所以要通过下面方法转utf8，才能解决get的乱码问题
+//		1.通过ISO8859-1这个tomcat默认编码来将获取的数据转成byte流
+//		2.将byte流，用utf8解析成字符串
+		byte[] b=request.getParameter("username").getBytes("iso8859-1");
+		String username=new String(b,"utf-8");
+//		System.out.println(request.getParameter("username"));
+		System.out.println(username);
+
+		
+		
+//		请求重定向
+//		response.sendRedirect(request.getContextPath()+"/index.jsp");
+	}
