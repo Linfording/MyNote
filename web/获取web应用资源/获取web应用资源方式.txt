@@ -1,0 +1,48 @@
+	public void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+//		在WEB应用中获取资源文件路径
+//		不可行：
+//		一.相对路径
+//		写相对路径会去程序启动目录下去找这个文件
+//		File file =new File("config.properties");
+//		System.out.println("path:"+file.getAbsolutePath());
+//		path:E:\tools\tomcat\apache-tomcat-7.0.53\bin\config.properties
+		
+		
+//		二.绝对路径
+//		去WEB应用所在硬盘的根目录下去找
+//		File file =new File("/config.properties");
+//		System.out.println("path:"+file.getAbsolutePath());
+//		path:E:\config.properties
+		
+//		三.写一个带盘符的硬盘路径:
+//		这样可以得到正确路劲，可是被写死了，如果项目发布，地址有变也会无法访问
+//		File file = new File("E:\\tools\\tomcat\\apache-tomcat-7.0.53\\webapps\\ServletTest\\WEB-INF\\classes\\config.properties");
+//		System.out.println("path:"+file.getAbsolutePath());
+//		path:E:\tools\tomcat\apache-tomcat-7.0.53\webapps\SrvletTest\WEB-INF\classes\config.properties
+		
+		
+//		两种可行方法：
+//		四.ServletContext.getRealPath
+		ServletContext sc=this.getServletContext();
+//		当前应用的根目录拼接传入的路径
+//		File file=new File(sc.getRealPath("/config.properties"));
+//		System.out.println(file);
+//		E:\tools\tomcat\apache-tomcat-7.0.53\webapps\ServletTest\config.properties
+		
+//		正确写法：
+//		File file2=new File(sc.getRealPath("/WEB-INF/classes/config.properties"));
+//		System.out.println(file2);
+//		E:\tools\tomcat\apache-tomcat-7.0.53\webapps\ServletTest\WEB-INF\classes\config.properties
+		
+//		五.类加载器
+//		1.获取类加载器
+//		普通的java文件也可以使用
+//		URL path=ServletContextD.class.getClassLoader().getResource("");
+//		System.out.println(path.getPath());
+//		/E:/tools/tomcat/apache-tomcat-7.0.53/webapps/ServletTest/WEB-INF/classes/
+		
+//		URL path2=ServletContextD.class.getClassLoader().getResource("config.properties");
+//		System.out.println(path2.getPath());
+//		/E:/tools/tomcat/apache-tomcat-7.0.53/webapps/ServletTest/WEB-INF/classes/config.properties
+	}
