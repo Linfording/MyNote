@@ -1,0 +1,128 @@
+ 1. load( url, [data], [callback] ) ：载入远程 HTML 文件代码并插入至 DOM 中。
+
+url (String) : 请求的HTML页的URL地址。
+
+data (Map) : (可选参数) 发送至服务器的 key/value 数据。
+
+callback (Callback) : (可选参数) 请求完成时(不需要是success的)的回调函数。
+
+这个方法默认使用 GET 方式来传递的，如果[data]参数有传递数据进去，就会自动转换为POST方式的。jQuery 1.2 中，可以指定选择符，来筛选载入的 HTML 文档，DOM 中将仅插入筛选出的 HTML 代码。语法形如 "url #some > selector"。
+
+这个方法可以很方便的动态加载一些HTML文件，例如表单。
+
+
+默认使用 GET 方式来传递的，如果[data]参数有传递数据进去，就会自动转换为POST方式
+
+示例代码：
+
+$(".ajax.load").load("http://www.jq-school.com",function (responseText, textStatus, XMLHttpRequest){this;//在这里this指向的是当前的DOM对象，即$(".ajax.load")[0] //alert(responseText);//请求返回的内容//alert(textStatus);//请求状态：success，error//alert(XMLHttpRequest);//XMLHttpRequest对象});
+
+注：不知道为什么URL写绝对路径在FF下会出错，知道的麻烦告诉下。下面的get()和post()示例使用的是绝对路径，所以在FF下你将会出错并不会看到返回结果。还有get()和post()示例都是跨域调用的，发现传上来后没办法获取结果，所以把运行按钮去掉了。
+
+ 
+
+
+2. jQuery.get( url, [data], [callback] )：使用GET方式来进行异步请求
+
+参数：
+
+url (String) : 发送请求的URL地址.
+
+data (Map) : (可选) 要发送给服务器的数据，以 Key/value 的键值对形式表示，会做为QueryString附加到请求URL中。
+
+callback (Function) : (可选) 载入成功时回调函数(只有当Response的返回状态是success才是调用该方法)。
+
+这是一个简单的 GET 请求功能以取代复杂 $.ajax 。请求成功时可调用回调函数。如果需要在出错时执行函数，请使用 $.ajax。示例代码：
+
+$.get("./Ajax.aspx", {Action:"get",Name:"lulu"}, function (data, textStatus){//返回的 data 可以是 xmlDoc, jsonObj, html, text, 等等.this; // 在这里this指向的是Ajax请求的选项配置信息，请参考下图alert(data);//alert(textStatus);//请求状态：success，error等等。
+
+当然这里捕捉不到error，因为error的时候根本不会运行该回调函数//alert(this);});
+点击发送请求：
+
+jQuery.get()回调函数里面的 this ，指向的是Ajax请求的选项配置信息：
+
+ 
+
+ 
+
+3. jQuery.post( url, [data], [callback], [type] ) ：使用POST方式来进行异步请求
+
+
+参数：
+
+url (String) : 发送请求的URL地址.
+
+data (Map) : (可选) 要发送给服务器的数据，以 Key/value 的键值对形式表示。
+
+callback (Function) : (可选) 载入成功时回调函数(只有当Response的返回状态是success才是调用该方法)。
+
+type (String) : (可选)官方的说明是：Type of data to be sent。其实应该为客户端请求的类型(JSON,XML,等等)
+
+这是一个简单的 POST 请求功能以取代复杂 $.ajax 。请求成功时可调用回调函数。如果需要在出错时执行函数，请使用 $.ajax。示例代码：
+
+Ajax.aspx：
+
+Response.ContentType = "application/json";Response.Write("{result: '" + Request["Name"] + ",你好！(这消息来自服务器)'}");
+jQuery 代码：
+
+$.post("Ajax.aspx", { Action: "post", Name: "lulu" },function (data, textStatus){// data 可以是 xmlDoc, jsonObj, html, text, 等等.//this; // 这个Ajax请求的选项配置信息，请参考jQuery.get()说到的thisalert(data.result);}, "json");
+点击提交：
+
+这里设置了请求的格式为"json"：
+
+ 
+
+如果你设置了请求的格式为"json"，此时你没有设置Response回来的ContentType 为：Response.ContentType = "application/json"; 那么你将无法捕捉到返回的数据。
+
+注意一下，alert(data.result); 由于设置了Accept报头为“json”，这里返回的data就是一个对象，并不需要用eval()来转换为对象。
+
+ 
+
+
+4. jQuery.getScript( url, [callback] ) : 通过 GET 方式请求载入并执行一个 JavaScript 文件。
+
+参数
+url (String) : 待载入 JS 文件地址。
+
+callback (Function) : (可选) 成功载入后回调函数。
+
+jQuery 1.2 版本之前，getScript 只能调用同域 JS 文件。 1.2中，您可以跨域调用 JavaScript 文件。注意：Safari 2 或更早的版本不能在全局作用域中同步执行脚本。如果通过 getScript 加入脚本，请加入延时函数。
+
+这个方法可以用在例如当只有编辑器focus()的时候才去加载编辑器需要的JS文件.下面看一些示例代码：
+
+加载并执行 test.js。
+
+jQuery 代码:
+
+$.getScript("test.js"); 
+
+
+5.通过 HTTP 请求加载远程数据。
+
+jQuery 底层 AJAX 实现。简单易用的高层实现见 $.get, $.post 等。$.ajax() 返回其创建的 XMLHttpRequest 对象。大多数情况下你无需直接操作该函数，除非你需要操作不常用的选项，以获得更多的灵活性
+$.ajax({
+	"url":"quoto.do",
+	"type":"get",
+	"dataType":"json",
+	"success":function(obj){
+	//处理服务器返回的数据
+	/*
+		obj是服务器返回的数据。
+		如果服务器返回的是json字符串，
+		会自动转换成对应的javascript对象。
+	*/
+	//更新表格
+	$('#tb1').empty();
+	for(i = 0; i < obj.length; i ++){
+		var s = obj[i];
+		$('#tb1').append(
+		'<tr><td>' + s.code 
+		+ '</td><td> ' + s.name 
+		+ '</td><td>' + s.price 
+		+ '</td></tr>');
+		}
+	},
+	"error":function(){
+		//服务器出错，在这儿处理
+	}
+				
