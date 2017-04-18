@@ -44,7 +44,9 @@
 
 				!![ import="{ package.class | package.*}, ..." ] 
 					导入需要使用到的包 
-					java.lang.*; javax.servlet.*; javax.servlet.JSP.*; javax.servlet.http.*;	
+					java.lang.*; javax.servlet.*; javax.servlet.JSP.*; javax.servlet.http.*;
+					这四个包可以不用导
+						
 					可以在一个page指令的import属性中导入多个包  也可以通过多个page指令来分别导包
 
 				![ session="true | false" ] 用来指定当前页面是否使用session，如果设置为true，则翻译过来的servlet中将会有对session对象的引用，于是可以直接在JSP中使用session隐式对象。但是这将导致一旦访问JSP就会调用request.getSession()方法，可能导致不必要的空间浪费。如果确定JSP中不需要session可以设为false
@@ -64,6 +66,15 @@
 				!!![ pageEncoding="characterSet | ISO-8859-1" ] 服务器翻译JSP时使用的编码集.
 					如果想防止JSP乱码,应该保证文件的保存编码和JSP翻译成servlet用的编码以及输出到浏览器后浏览器打开的编码一致.此属性一旦设置好,翻译引擎会间接帮我们设置content-type属性.
 
+				JSP文件保存时使用的编码 -- utf-8
+				JSP被翻译时使用的编码 --
+					pageEncoding="utf-8"
+				JSP翻译后的Servlet发送数据使用的编码 --
+					response.setCharacterEncode("utf-8");
+					<==>
+					response.setContextType("text/html;charset=utf-8")
+				浏览器接收数据使用的编码 --
+					response.setContextType("text/html;charset=utf-8")
 				[ buffer="none | 8kb | sizekb" ] out隐式对象所使用的缓冲区的大小
 				[ autoFlush="true | false" ] out隐式对象是否自动刷新缓冲区，默认为true，不需要更改
 				[ isThreadSafe="true | false" ] 翻译过来的servlet是否实现SingleThreadModel
@@ -98,8 +109,46 @@
 		区别在于out对象自带缓冲区, 如果out和response.getWriter()混用可能会造成输出顺序上混乱
 		page指令中buffer和autoflush就是用来设置out缓冲区的
 		总结起来一句话, 如果想要在JSP页面中输出内容, 直接使用out, 尽量别使用response.getWriter();
+		--jsp代码：
+		<html>
+  		<head>
+			<title>05.jsp</title>
+  		</head>
+ 		 <%
+  			String a="AAAA";
+  			String b="BBBB";
+  			String c="CCCC";
+  			String d="DDDD";
+  
+  		 %>
+  		<body>
+  		 	<%out.write(a); %><br/>
+  		 	<%response.getWriter().write(b); %><br/>
+   			<%out.write(c); %><br/>
+  		 	<%response.getWriter().write(d); %><br/>
+ 		 </body>
+		</html>
+
+		--浏览器端输出：
+		BBBBDDDD AAAA
+
+		CCCC
+
+		--原因：
+		翻译jsp会将页面放入out缓冲区
+		response内容会先放入response缓冲区
+
+		当页面全部翻译完之后，再将out缓冲区的内容输入到response缓冲区
+		所以会先输出response缓冲区里的内容：BBBBDDDD，然后再输出整个页面
+		--解决方法：
+		1.设置out缓冲区大小为0;这样翻译的页面会直接放入response缓冲区，这样输出顺序就不会混乱
+		2.只使用out对象输出，或者只使用response.getWriter()输出；不要混用
+			
 
 	!!!2.pageContext
+		已学过的作用域对象：
+		servletContext>session>request>pageContext
+	
 		代表当前JSP页面的运行环境的对象, 通过该对象可以访问页面中的共享数据。
 		!!!(1) 作为入口对象获取其他八大隐式对象
 			getPage方法	返回page隐式对象
@@ -159,6 +208,7 @@
 		<jsp:param>配合前两个标签使用，可以在包含或转发时，带一些参数过去
 
 	!!!2.el表达式 -- 表达式, 可以非常方便的替代JSP页面中的JSP脚本表达式
+(<%=  >)
 		基本结构: ${ 表达式 }
 		只能获取不能设置!!!
 		只能获取不能遍历!!!
@@ -203,10 +253,12 @@
 				!!!pageContext - 有了它就意味着el中就有了其他八大隐式对象
 
 			代表四大作用域的隐式对象, 用来明确指定从哪个域中查找数据
-				!!!pageScope
-				!!!requestScope
-				!!!sessionScope
-				!!!applicationScope
+				!!!pageScope -- pageContext
+				!!!requestScope --request
+				!!!sessionScope --session
+				!!!applicationScope --ServletContext
+
+			上面四个对象只能代表四大作用域对象身上的域，其他的功能并不能用
 
 			请求参数组成的map
 				!!!param - Map<String, String>
@@ -227,7 +279,10 @@
 		为javaweb开发人员提供的一套标准通用的标签库, 可以和el配合起来替JSP页面中的大部分的java代码
 		javaee4.0及其之前的版本中, 在使用前需要导入jstl开发包, 在javaee5.0及其以后版本中内置了jstl开发包, 所以不需要我们手动导入就可以直接使用了!!
 
+		<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+	
 		<c:out> 标签用于输出一段文本内容到pageContext对象当前保存的“out”对象中。
+		相当于<%= %>  ${}
 		!!!<c:set>标签用于把某一个对象存在指定的域范围内，或者设置Web域中的java.util.Map类型的属性对象或JavaBean类型的属性对象的	属性。  
 		<c:remove>标签用于删除各种Web域中的属性
 		<c:catch>标签用于捕获嵌套在标签体中的内容抛出的异常，其语法格式如下：<c:catch [var="varName"]>nested actions</c:catch>
@@ -237,8 +292,8 @@
 		<c:forTokens>用来浏览一字符串中所有的成员，其成员是由定义符号所分隔的
 		<c:param>标签  在JSP页面进行URL的相关操作时，经常要在URL地址后面附加一些参数。<c:param>标签可以嵌套在<c:import>、<c:url>或<c:redirect>标签内，为这些标签所使用的URL地址附加参数。
  		<c:import> 标签,实现include操作
- 		<c:url>标签用于在JSP页面中构造一个URL地址，其主要目的是实现URL重写。URL重写就是将会话标识号以参数形式附加在URL地址后面 
 		<c:redirect>标签用于实现请求重定向 
+ 		<c:url>标签用于在JSP页面中构造一个URL地址，其主要目的是实现URL重写。URL重写就是将会话标识号以参数形式附加在URL地址后面 
 		
 五.软件分层
 	javaee的开发模式的发展：参看图
