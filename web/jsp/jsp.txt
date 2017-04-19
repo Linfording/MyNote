@@ -218,8 +218,10 @@
 			**获取数组中的数据: 可以通过 数组变量名[数字] 来获取域中数组中的内容
 			**获取集合中的数据: 可以通过 集合变量名[数字] 来获取域中集合中的内容
 			**获取map中的数据: 可以通过 map变量名[键] 或者是 map变量名.键 获取map中的数据
-			
 			**获取javaBean中的属性: 在获取javaBean中的属性值时, 点什么就相当于get什么(比如: p.username <==> p.getUsername()) 
+
+			**在域中才可以通过el获取
+			
 				## 之前获取web应用的名称是通过 <%= request.getContextPath() %>
 				但是这种写法不推荐, 推荐使用el表达式来获取: ${ pageContext.request.contextPath }			
 		(2) 执行运算
