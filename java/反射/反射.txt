@@ -1,0 +1,146 @@
+1.理解Class类
+2.理解java的类加载机制
+3.学会使用ClassLoader进行类加载
+4.理解反射的机制
+5.掌握Constructor、Method、Field类的用法
+6.理解并掌握动态代理
+
+主要掌握的方法：
+Class:newInstance()    --通过此方法创建类对象
+ClassLoader:getResourceAsStream()   --通过此方法获得文件的输入流
+
+
+1.关于Class类：
+	a. Class是一个类 
+	b.类封装了哪些信息：
+	  	对象照镜子后可以得到的信息：某个类的数据成员名，方法和构造器、
+	  	某个类到底实现了哪些接口。
+	c.对于每个类而言，JRE都为其保留一个不变的Class类型的对象。一个Class对象包含了特定某个类的有关信息
+	d.Class对象只能由系统建立对象
+	e.一个类在JVM中只会有一个Class实例
+		每个类的实例都会记得自己是由哪个Class实例所生成的
+
+	1.得到class对象
+	1.1直接通过类名.class的方式得到
+	1.2通过对象的getClass()方式
+	1.3通过全类名的方式获取---用的比较多
+
+		方式一：
+		clazz=Person.class;
+		
+		方式二：
+		Person person=new Person();
+		clazz=person.getClass();
+		
+		Object obj=new Person();
+		clazz=obj.getClass();
+			
+		方式三：
+		String className="javamain.Person";
+		clazz=Class.forName(className);
+
+	!!!!Class 类的 newInstance()方法
+//		利用Class对象的newInstance()方法来创建一个类的对象
+//		实际调用的是类的无参构造器！
+//		一般的，一个类若声明了带参构造器，也要声明一个无参的构造器，否则newInstance()将无法使用
+
+			String className="javamain.Person";
+			Class clazz=Class.forName(className);
+			Object obj=clazz.newInstance();
+			System.out.println(obj);
+
+2.ClassLoader
+	类加载器是用来把类(class)装载进JVM的。JVM规范定义了两种类型的类加载器：
+		1)启动类装载器(bootstrap)
+		2)用户自定义装载器(user-defined class loader)
+	JVM在运行时会产生3个类加载器组成的初始化加载器层次结构：
+
+	1.引导类加载器:用C++编写的，是JVM自带的类加载器，负责java平台核心库，用来装载核心类库。该加载器无法直接获取
+
+	2.扩展类加载器:负责jdk_home/lib/ext目录下的jar包或-D java.ext.dirs指定目录下的jar包装入工作库
+
+	3.系统加载器:负责java-classpath或-D java.class.path所指目录下的类与jar包装入工作库
+
+	**自顶向下尝试加载类
+	**自底向上检查类是否已装载
+
+
+//		1.获取一个系统的类加载器
+		ClassLoader classLoader=ClassLoader.getSystemClassLoader();
+		System.out.println(classLoader);
+//		sysout:sun.misc.Launcher$AppClassLoader@7791c263
+//		系统类加载器：AppClassLoader
+
+//		2.获取系统类加载器的父类加载器：
+		classLoader=classLoader.getParent();
+		System.out.println(classLoader);
+//		sysout:sun.misc.Launcher$ExtClassLoader@2712ee9
+//		扩展类加载器：ExtClassLoader
+		
+//		3.获取扩展类加载器父类加载器
+		classLoader=classLoader.getParent();
+		System.out.println(classLoader);
+//		sysout:null---引导类加载器，获取不到
+		
+//		4.测试当前类由哪个类加载器进行加载
+		classLoader=Class.forName("test.ReflectionTest").getClassLoader();
+		System.out.println(classLoader);
+//		sysout:sun.misc.Launcher$AppClassLoader@7791c263
+		
+//		5.测试JDK 提供的Object类由哪个类加载器负责加载
+		classLoader=Class.forName("java.lang.Object").getClassLoader();
+		System.out.println(classLoader);
+//		sysout:null---说明由引导类加载器进行加载
+		
+//		***6.关于类加载器的一个主要方法。
+//		文件如果放在src下要使用"bin/test.properties"才能找到文件
+//		文件如果放在根目录下，使用test.properties能找到文件
+//		因为src下的文件在编译时都会自动的被加载到bin下
+//		InputStream in=new FileInputStream(new File("bin/test.properties"));
+		
+//		类加载器，能够加载当前src对应的bin目录下的所有class
+//		类加载器可以加载当前bin下的所有类，自然也可以加载所有文件
+//		所以这时应该用类加载器来获取
+		
+//		调用getResourceAsStream  获取类路径下的文件对应的输入流
+		InputStream in=null;
+		in=this.getClass().getClassLoader().getResourceAsStream("test.properties");
+		System.out.println(in);
+
+
+3.反射机制
+Reflection是java被视为动态语言的关键，反射机制允许程序在执行期借助于Reflection API取得任何类的内部信息，并能直接操作任意对象的内部属性以及方法
+
+Java反射机制主要提供了一下功能：
+1.在运行时构造任意一个类的对象
+2.在运行时获取任意一个类所具有的成员变量和方法
+3.在运行时调用任意一个对象的方法(属性)
+4.生成动态代理
+
+
+Class是对一个类的描述
+	 * 类的属性：Field
+	 * 类的方法：Method
+	 * 类的构造器：Constrctor
+
+Method:对应类中的方法
+1.获取Method：
+1.1获取类的方法数组：clazz.getDecloaredMethods();
+1.2获取类指定的方法：getDeclaredMethod(String name,Class<?>...parameterTypes)
+		name:方法名
+		parameterTypes:方法的参数类型(使用Class来描述)的列表
+ 
+		Method method=clazz.getDeclaredMethod("setName", String.class);
+			
+		method=clazz.getDeclaredMethod("test");
+
+		method=clazz.getDeclaredMethod("setName",String.class,Integer.class);
+1.3通过Method执行方法
+		method.invoke(Object obj,Object....args)
+			obj:执行哪个对象的方法
+			args:执行方法时的参数
+
+		//对应的原方法为public void setName(String name,Integer age)
+
+		Object obj=clazz.newInstance();
+		method.invoke(obj, "张张",23);
