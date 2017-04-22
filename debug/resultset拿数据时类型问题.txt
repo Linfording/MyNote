@@ -1,0 +1,50 @@
+@Override
+	public T handle(ResultSet rs) throws SQLException {
+		try {
+			T t=type.newInstance();
+			/*ResultSetMetaData rsm=rs.getMetaData();
+			Map<String, Object> datamap=new HashMap<String, Object>();
+			if (rs.next()) {
+				for (int i = 0; i < rsm.getColumnCount(); i++) {
+					datamap.put(rsm.getColumnName(i+1), rs.getObject(i+1));
+				}
+				BeanUtils.populate(t, datamap);
+			}*/
+			if (rs.next()) {
+//				User.class->BeanInfo info
+				BeanInfo info=Introspector.getBeanInfo(type);
+//				从info中获取所有属性对应的对象里面有属性的信息：type，name，set，get;
+				PropertyDescriptor[] pds=info.getPropertyDescriptors();
+//				PropertyDescriptor pd=pds[0];
+//				pd.getName();
+//				pd.getDisplayName();
+//				这两个Name默认相等
+//				pd.getPropertyType();
+//				pd.getReadMethod();
+//				pd.getWriteMethod();
+					Method method;
+					for (int i = 0; i < pds.length; i++) {
+						try {
+						method=pds[i].getWriteMethod();
+//						System.out.println(rs.getObject(pds[i].getName()));
+//						System.out.println(rs.getObject(pds[i].getName()).getClass());
+//						在mysql中int类型添加了unsigned属性的话，通过rs.getObject获取到的是Long类型，long不论是赋值到String还是赋值到int类型都会报错，没有添加unsigned属性的int获取到的会是integer类型，所以在使用unsigned的时候需要小心
+//						解决方法：
+//							1.不使用unsigned，完全通过java层来控制数据库内数据的唯一性
+//						如果非要使用解决方法：
+//							1.bean中使用String，rs.getString，这样类型就会统一
+//							2.bean中修改setInt方法，判断类型之后再赋值
+//							3.在通过resultset获取值得时候判断正确的类型通过rs.getInteger方法获取值直接赋值给int
+//						method.invoke(t, rs.getString(pds[i].getName()));
+						method.invoke(t, rs.getObject(pds[i].getName()));
+						} catch (Exception e) {
+							continue;
+						}
+					}
+			}
+			return t;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}

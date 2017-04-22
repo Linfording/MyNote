@@ -1,0 +1,130 @@
+一、自定义Utils
+1.1自定义update方法
+1.2使用自己的update方法
+1.3自定义Query方法
+1.4写ResultSetHandler
+	========================================================
+	/**
+	 * 实现添加，修改，删除 某条记录
+	 * @param sql sql语句
+	 * @param params 不定个数的参数列表
+	 * @return	影响的行数
+	 * @throws SQLException
+	 */
+	public static int update(String sql,Object... params) {
+	//		params不传参的话，长度为0，不为null
+		Connection conn=null;
+		PreparedStatement pstm=null;
+		try {
+			conn=getConnection();
+			pstm=conn.prepareStatement(sql);
+			for (int i = 0; i < params.length; i++) {
+				if (params[i]!=null) {
+					pstm.setObject(i+1, params[i]);
+				}
+			}
+			return pstm.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return 0;
+		}finally{
+			closeConn(conn, pstm,null);
+		}
+	}
+	=========================================================
+二、过滤器Filter
+Filter：请求和响应会先经过过滤器才会传入浏览器和服务器
+应用场景：30天登录，处理乱码，权限验证
+
+三大组件：
+	Servlet
+	Filter
+	Listener
+2.1.2概念：
+	过滤器是Servlet技术中最实用的技术，web开发人员通过使用filter技术对服务器资源管理的所有web资源：例如jsp，servlet，静态图片文件或静态 html文件等进行拦截，从而实现一些特殊的功能。流入实现URL级别的权限访问控制，敏感词汇，全站乱码处理，自动登录的一些高级功能。
+
+2.1.3 过滤器的功能
+	1)过滤器可以拦截对资源的访问
+	2)一个过滤器可以拦截多个资源，一个资源也可能被多个过滤器拦截
+	3)所谓的拦截是更具访问的URL地址来确定访问的是哪个资源，确定是否拦截
+	4)所谓的拦截其实就是拦截下来代表请求的request和响应的response
+	4)拦截后：控制是否允许访问、访问之前和之外做一些额外操作
+2.2过滤器开发入门
+2.2.1开发过滤器的两个步骤
+	1)写一个类实现Filter接口
+	2)在web.xml中配置过滤器
+		同servlet配置类似，url-pattern的配置也和servlet配置类似
+	3)创建第二个filter，并配置在web.xml中
+		测试发现过滤器的执行顺序和过滤器的filter-mapping配置顺序有关
+
+	filter.class
+	=========================================================
+	/**
+	 * 在filter对象被创建出来时被调用
+	 * 初始化方法：
+	 * 主要作用：
+	 * 	1.获取该过滤器在web.xml中的配置信息
+	 * 	2.获取代表当前项目的ServletConetext对象
+	 */
+	public void init(FilterConfig filterConfig) throws ServletException {
+		System.out.println("firstfilter init");
+//		获取配置信息
+		String encode=filterConfig.getInitParameter("encode");
+		System.out.println(encode);
+//		获取ServletContext
+		ServletContext application=filterConfig.getServletContext();
+	}
+	public void destroy() {
+		System.out.println("firstfilter destroy");
+	}
+	/**
+	*filter的核心方法，当过滤器拦截到对资源的访问时，服务器会自动调用该方法执行过滤代码
+	*FilterChain代表过滤器链
+	*	一个资源可以被多个拦截器所拦截，拦截顺序是mapping的配置顺序
+	*	所有拦截当前资源的过滤器按照拦截顺序就组成了一个拦截器链，chain，代表就是当前拦截器链。
+	*	chain对象提供了一个doFilter的方法，执行该方法表示当前过滤器方形。执行过滤器的下一个节点，如果下一个节点没有过滤器了，就执行真正要访问的资源
+	*/
+	public void doFilter(ServletRequest request, ServletResponse response,
+			FilterChain chain) throws IOException, ServletException {
+		System.out.println("firstfilter....start....");
+//		放行
+		chain.doFilter(request, response);
+		System.out.println("fistfilter.....end...");
+	}
+	=========================================================
+
+	web.xml
+	==========================================================
+	<filter>
+	<filter-name>FirstFilter</filter-name>
+	<filter-class>filter.FirstFilter</filter-class>
+	</filter>
+	<filter-mapping>
+	<filter-name>FirstFilter</filter-name>
+	<url-pattern>/*</url-pattern>
+	<!-- distpatcher属性的设置
+	REQUEST:缺省值，拦截的是request请求时(使用最多，不些默认就是此值)
+	FORWORD:转发类型拦截  
+	INCLUDE:包含时
+	ERROR:报错时
+	-->
+  	<dispatcher>REQUEST</dispatcher>
+  	<!-- <servlet-name></servlet-name> 也可以指定servlet-name来拦截某一个servlet或N个servlet-->
+ 	</filter-mapping>
+ 	============================================================
+
+2.3过来过去的生命周期
+	当服务器启动后web应用加载后，立即创建出这个web应用中的所有过滤器对象，创建出来后立即调用过滤器的init方法执行初始化操作。从此这些过滤器对象驻留在内存中为后续的拦截进行服务。每当拦截到资源时，都会执行dofilter方法执行。最终直到服务器关闭或web应用移出容器时，随着web应用的销毁，过滤器对象销毁，销毁之前调用ddestory方法执行善后工作。非正常销毁时，则无法调用destory()。
+	和servletContext生命周期一样
+3.过滤器使用:
+	全站乱码处理:
+	3.1开发思路
+	3.2编写乱码处理类实现fitler接口
+		修改方法：
+			1.继承
+			2.动态代理
+			3装饰者模式
+		补充自己总结5个设计模式:单例,MVC,工厂,代理(静态代理，动态代理),
+		常用的有20多种
+
+	
