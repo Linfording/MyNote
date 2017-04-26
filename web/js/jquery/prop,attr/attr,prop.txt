@@ -1,0 +1,18 @@
+一、prop:
+	1、.prop( propertyName ) 
+	获取匹配集合中第一个元素的Property的值 
+	2、 
+	.prop( propertyName, value ) 
+	.prop( map ) 
+	.prop( propertyName, function(index, oldPropertyValue) ) 
+	给匹配元素集合设定一个或多个属性 
+
+.prop()和 .attr()区别 
+Attributes模块的变化是移除了attributes和properties之间模棱两可的东西，但是在jQuery社区中引起了一些混乱，因为在1.6之前的所有版本中都使用一个方法(.attr())来处理attributes和properties。但是老的.attr()方法有一些bug，很难维护。jQuery1.6.1对Attributes模块进行了更新，并且修复了几个bug。
+
+为了让jQuery1.6中的.attr()方法的变化被理解的清楚些，下面是一些使用.attr()的例子，虽然在jQuery之前的版本中能正常工作，但是现在必须使用.prop（）方法代替： 
+	.attr()								----->	.prop()
+	$(window).attr  					----->	$(window).prop
+	$(document).attr					----->	$(document).prop	
+	$(":checkbox").attr("checked",true)	----->	$(":checkbox").prop("checked",true)
+	$("option").attr("selected",true)	----->	$("option").prop("selected",true)
