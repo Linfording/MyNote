@@ -234,13 +234,19 @@
 	1.首先，ThreadLocal 不是用来解决共享对象的多线程访问问题的，一般情况下，通过ThreadLocal.set() 到线程中的对象是该线程自己使用的对象，其他线程是不需要访问的，也访问不到的。各个线程中访问的是不同的对象。
 	2.另外，说ThreadLocal使得各线程能够保持各自独立的一个对象，并不是通过ThreadLocal.set()来实现的，而是通过每个线程中的new 对象 的操作来创建的对象，每个线程创建一个，不是什么对象的拷贝或副本。
 	通过ThreadLocal.set()将这个新创建的对象的引用保存到各线程的自己的一个map中，每个线程都有这样一个map，执行ThreadLocal.get()时，各线程从自己的map中取出放进去的对象，因此取出来的是各自自己线程中的对象，ThreadLocal实例是作为map的key来使用的。 
-	如果ThreadLocal.set()进去的东西本来就是多个线程共享的同一个对象，那么多个线程的ThreadLocal.get()取得的还是这个共享对象本身，还是有并发访问问题。 
-	
-	private static ThreadLocal<Connection> tl=new ThreadLocal<Connection>();
+	如果ThreadLocal.set()进去的东西本来就是多个线程共享的同一个对象，那么多个线程的ThreadLocal.get()取得的还是这个共享对象本身，还是有并发访问问题。
 
-	get()---
 
-	
-	tl.set(conn1);
-	tl.get();---conn1
-	
+	源码分析:http://www.iteye.com/topic/103804
+	因此ThreadLocal实例的变量只有这个threadLocalHashCode，而且是final的，用来区分不同的ThreadLocal实例，ThreadLocal类主要是作为工具类来使用，那么ThreadLocal.set()进去的对象是放在哪儿的呢？ 
+		ThreadLocalMap map = Thread.currentThread().threadLocals;  
+	这个ThreadLocalMap 类是ThreadLocal中定义的内部类，但是它的实例却用在Thread类中 
+
+	public class Thread implements Runnable {  
+	    ......  
+	  
+	    /* ThreadLocal values pertaining to this thread. This map is maintained 
+	     * by the ThreadLocal class. */  
+	    ThreadLocal.ThreadLocalMap threadLocals = null;    
+	    ......  
+	}  
