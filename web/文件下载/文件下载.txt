@@ -1,0 +1,48 @@
+文件下载
+如何实现下载
+1.直接和资源建立连接
+	1.直接建立资源连接
+    <a href="${path }/1.jpg">1.jpg</a><br>
+    <a href="${path }/2.txt">2.txt</a><br>
+    <a href="${path }/3.pptx">3.ppt</a><br>
+	若为浏览器能够解析的资源，浏览器会直接打开，不会提供下载，比如图片,html,txt这些资源都会直接打开，虽然这样跟下载没什么差但是用户体验不太好<br>
+	目前仅用在少量文件类型，比如zip等等
+	2.IO流的方式
+	response.setHander("Content-Disposition","attachment;filename="+name);
+//		下载哪个文件
+	String fileNameStr=request.getParameter("filename");
+	String fileName=new String(fileNameStr.getBytes("ISO8859-1"), "utf-8");
+//		io操作
+	OutputStream ops=response.getOutputStream();
+//		InputStream ips=new FileInputStream(new File(request.getContextPath()+"/"+fileName));
+	InputStream ips=new FileInputStream(new File(getServletContext().getRealPath(fileName)));
+
+	byte[] date=new byte[1024];
+	int len=-1;
+	while ((len=ips.read(date))!=-1) {
+		ops.write(date,0,len);
+	}
+	ips.close();
+	ops.close();
+	问题:
+		1.下载文件名如果为中文时要处理乱码
+		2.下载后中文文件名消失
+	解决办法:
+		1.
+	String fileName=new String(request.getParameter("filename").getBytes("ISO8859-1"), "utf-8");
+		2.设置头通知,以附件下载方式打开时进行url编码
+		response.setHeader("Content-Disposition", "attachment;filename="+URLEncoder.encode(filename,"utf-8"));
+		补充文件上传时，为防止文件重名，一般在上传后将文件生成新的名称,通常使用以下两种方式:
+		a.IP时间戳
+		b.UUID
+		遗留问题:
+		某些浏览器会做url解码处理，下载中文文件名时显示为正常中文如:Chrome。但是某些浏览器未做url解码处理，下载中文文件名时如果你做了URL编码，会是URL编码格式的文件名如Firefox。如何处理Firefox等浏览器的乱码情况。
+	3.文件转发方式
+	String fileName=new String(request.getParameter("filename").getBytes("ISO8859-1"), "utf-8");
+	response.setHeader("Content-Disposition", "attachment;filename="+URLEncoder.encode(fileName,"utf-8"));
+	request.getRequestDispatcher(fileName).forward(request,response);
+总结:
+	若文件只有zip类型，直接使用第一种可以很方便
+	若文件类型什么都有推荐使用二三种
+	当需要做额外操作比如断点续传等，就使用第二种
+		
