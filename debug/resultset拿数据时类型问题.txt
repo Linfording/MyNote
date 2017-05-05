@@ -1,3 +1,4 @@
+1.
 @Override
 	public T handle(ResultSet rs) throws SQLException {
 		try {
@@ -48,3 +49,38 @@
 			return null;
 		}
 	}
+
+2.从sum函数返回的值中取数据时
+
+sql:
+select pd.id,pd.`name` prod_name,SUM(oi.buynum) sale_num,pnum
+from orders od,orderitem oi,products pd
+where od.id=oi.order_id and oi.product_id=pd.id
+AND od.paystate=1 GROUP BY pd.`name` ORDER BY sale_num DESC LIMIT 0,3
+
+public class SaleInfo {
+	private String id;
+	private String prod_name;
+	private BigDecimal sale_num;
+	//private int sale_num;
+}
+
+
+//System.out.println(rs.getObject(pds[i].getName()).getClass());
+//输出的是class java.math.BigDecimal
+
+所以实体类的类型定义为int时无法从resultset中获取到参数
+
+方案:
+1.从resultset获取数据时判断实体类的类型，若为int采取getInt
+//	if (pds[i].getPropertyType()==int.class){
+	if (pds[i].getPropertyType()==Integer.TYPE){
+	method.invoke(t, rs.getInt(pds[i].getName()));
+}else{
+	method.invoke(t, rs.getObject(pds[i].getName()));
+}
+
+2.实体类用BigDecimal定义属性
+3.更改实体类的set方法
+
+
