@@ -42,7 +42,8 @@
 	response.setHeader("Content-Disposition", "attachment;filename="+URLEncoder.encode(fileName,"utf-8"));
 	request.getRequestDispatcher(fileName).forward(request,response);
 总结:
-	若文件只有zip类型，直接使用第一种可以很方便
-	若文件类型什么都有推荐使用二三种
-	当需要做额外操作比如断点续传等，就使用第二种
+	如果仅仅是几个压缩包下载的话，建议使用超链接。
+	如果下载的文件各种类型的都有，不建议使用超链接的方式；
+	可以选择后两种方式，如果文件都不是太大的话，自由选择；如果文件想
+	实现一些自定义的一些功能（比如断点续传）建议使用IO流方式。
 		
