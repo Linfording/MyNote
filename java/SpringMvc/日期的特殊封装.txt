@@ -1,0 +1,16 @@
+	//日期格式转换，默认只支持yyyy/MM/dd格式，要转变为yyyy-MM-dd
+	protected void initBinder(HttpServletRequest request, ServletRequestDataBinder binder) throws Exception {
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		
+		//注册一个自定义格式转换器
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(df,true));
+	}
+
+
+
+	@InitBinder
+	public void InitBinder (ServletRequestDataBinder binder){
+		binder.registerCustomEditor(
+			java.util.Date.class, 
+			new CustomDateEditor(new SimpleDateFormat("yyyy-MM-dd"), true));
+	}
