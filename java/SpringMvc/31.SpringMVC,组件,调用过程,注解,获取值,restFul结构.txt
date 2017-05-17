@@ -1,0 +1,302 @@
+day07
+1.SpringMVC是一个前端控制框架，主要用来接收用户提交的参数，和响应数据
+  SpringMVC是Spring家族的一大组件
+  Spring是一个父级容器
+  SpringMVC是一个子级容器，子级容器中的某些特定用法，不能用到Spring中
+
+2.Servlet的缺点
+	1.每个Servlet都需要编写配置文件
+	2.每个servlet的入口只有一个，只能处理一个业务，如果处理多个业务，必须编写多个servlet
+	3.获取参数时,必须一个个获取
+
+3.SpringMVC的组件
+	一个控制器，三个适配器
+	3.1前端控制器(DispatcherServlet):
+		功能:转发request和response
+	3.2处理器映射器(HandlerMapping)
+		功能:根据用户提交的Url找到能够处理的Controller
+	3.3处理器适配器(HandlerAdapter)
+		功能:根据特定的规则执行用户的请求
+	3.4视图解析器(Viewresolver)
+		功能:将用户返回的页面名称，自动拼接为具体页面路径
+
+4.SpringMVC核心调用过程
+	Url: IP:端口/项目名/servlet-url-pattern
+		服务端接收到请求后,servlet-service-dao，响应
+							handler
+	
+		IP:端口/项目名/hello.action
+					 hello.do
+
+		1.客户端--发送request--DispatherServlet
+		2.DispatherServlet--请求执行handler--HandlerMapping(根据Url找到Handler)
+		3.HandlerMapping--返回Handler--DispatherServlet
+		4.Dispatherervlet--请求执行--HandlerAdapter
+		5.HandlerAdapter--执行--Handler处理器
+		6.Handler处理器--返回modelAndView--HandlerAdapter
+		7.HandlerAdapter--返回modeAndView--DispatherServlet
+		8.DispathServlet--解析view--Viewresolver
+		9.Viewresolver--返回view--DispathServlet
+		10.DispathServlet--将model填充到view中展现(View试图渲染)响应完成
+
+
+		1.客户端发送请求给前端控制器
+		2.前端控制器请求处理器映射器，查询能够处理请求的handler
+		3.处理器映射器找到Controller路径返回给前端控制器
+		4.前端控制器将Controller路径交给处理器适配器，请求找到合适的处理器，处理请求
+		5.处理器适配器找到合适的处理器，执行代码(Controller-service-dao)
+		6.处理器将处理后的结果和响应页面封装到ModelAndView对象中，返回给处理器适配器
+		7.处理器适配器将ModelAndView返回给前端控制器
+		8.前端控制器请求试图解析器帮助解析View对象，告知到底是哪个页面
+		9.试图解析器内部拼接，将页面名称拼接成真实的页面路径返回给前端控制器--view=hello--> /xiangmu/hello.jsp 拼接前后缀
+		10.前端控制器将数据填充到页面中(默认填充到request域中)该过程叫做试图渲染，然后response给客户端，完成请求
+		
+
+		modelAndView(model:数据	view:视图名称)
+
+5.SpringMVC入门
+	配置DispathServlet
+	配置HandlerMapping  url与Controller的映射关系
+
+	Handler:
+		执行代码，编写业务逻辑
+
+	编写Viewresolver拼接的前后缀
+
+	1.导入jar包			
+		com.springsource.javax.validation-1.0.0.GA.jar--用户验证
+		commons-fileupload-1.2.2.jar--文件上传
+		commons-logging-1.0.4.jar--spring依赖的log包
+		jackson-core-asl-1.9.13.jar--JSON
+		jackson-mapper-asl-1.9.13.jar
+		log4j.jar--日志包
+		slf4j-api-1.5.8.jar--slf4j也是一种表达式
+		slf4j-log4j12.jar
+		spring-web-3.2.3.RELEASE.jar--SpringMVC
+		spring-webmvc-3.2.3.RELEASE.jar
+		standard-1.1.2.jar--依赖
+
+	2.配置DispathServlet
+		  <!--配置前端控制器  -->
+		  <servlet>
+		  	<servlet-name>springmvc</servlet-name>
+		  	<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		  </servlet>
+		  <servlet-mapping>
+		  	<servlet-name>springmvc</servlet-name>
+		  	<url-pattern>*.action</url-pattern>
+		  </servlet-mapping>
+	3.编写SpringMVC核心配置文件，配置
+		3.1默认配置文件名称:
+			servlet-name+"-serlvet".xml
+			springmvc-servlet.xml
+		3.2配置文件的位置:
+			默认条件下与web.xml平级
+	4.Handler
+		编写Controller:
+			实现Controller接口
+====================================================
+	public class HelloController implements Controller{
+		public ModelAndView handleRequest(HttpServletRequest request,HttpServletResponse response) throws Exception {
+			ModelAndView modelAndView=new ModelAndView();
+			//准备数据
+			//.addObject(String attributeName, Object attributeValue)
+			modelAndView.addObject("msg","Hello SpringMVC");
+			//准备页面名称
+			//.setViewName(String viewName)
+			modelAndView.setViewName("hello");
+			return null;
+		}
+	}
+====================================================
+	5.编写配置文件:HandlerMapping
+	5.1添加约束	
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd "
+	5.2配置映射关系
+	<!--配置Url和Controller关系  -->
+	<bean id="/hello.action" class="controller.HelloController"></bean>
+	6.配置试图解析器:Viewresolver
+		<!--配置试图解析器
+		内部资源试图解析器:InternalResourceViewResolver
+	  -->
+		  <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		  	<property name="prefix" value="/WEB-INF/"></property>
+		  	<property name="suffix" value=".jsp"></property>
+		  </bean>
+6.一站式乱码解决方案
+	配置一个过滤器，Spring自带的,但是此过滤器只能解决post提交的数据，get提交的数据不会帮你转码，
+	  <filter>
+	  	<filter-name>characterEncod</filter-name>
+	  	<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+	 	<init-param>
+	 		<param-name>encoding</param-name>
+	 		<param-value>utf-8</param-value>
+	 	</init-param>
+	  </filter>
+	  <filter-mapping>
+	  	<filter-name>characterEncod</filter-name>
+	  	<url-pattern>/*</url-pattern>
+	  </filter-mapping>
+
+7.自定义springmvc-servlet.xml位置，放在src下
+	<!--配置前端控制器  -->
+	<servlet>
+		<servlet-name>springmvc</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<!--更改配置文件路径  -->
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:springmvc-servlet.xml</param-value>
+		</init-param>
+	</servlet>
+
+8.SpringMVC注解形式
+	1.配置文件里开启包扫描和SpringMVC注解
+	<!--开启包扫描  -->
+	<context:component-scan base-package="controller"></context:component-scan>
+	
+	<!--开启SpringMVC注解  -->
+	<mvc:annotation-driven/>
+
+	2.Controller添加注解
+	!!@Controller
+	public class HelloController{
+	//	针对用户输入的url--匹配对应的方法
+		!!@RequestMapping("/hello.action")
+		public String hello(Model model){
+			//Model对象用来存储数据
+			model.addAttribute("msg", "Hello SpringMVC annotation");
+			//返回View
+			return "hello";//返回用户的展现页面
+		}
+		@RequestMapping("/helloSpringMVC.action")
+		public String helloSpringMVC(Model model){
+			model.addAttribute("msg", "helloSpringMVC annotation");
+			return "hello";//返回用户的展现页面
+		}
+	}
+	3.SpringMVC的注解调动原理
+		当web容器启动时，首先会加载SpringMVC的核心配置文件,当解析到包扫描时，首先会创建含有@Controller的对象，内部进行管理。之后会解析@RequestMapping("/xxxx.action")注解，之后形成url-controller的映射关系。
+		当用户发送url时，首先会匹配映射路径，如果能够匹配成功，则执行注解下的方法，完成正确的调用。
+
+9.SpringMVC的好处
+	1.使用SpringMVC可以通过一个Controller,处理一张表的全部业务，比起之前的Servlet要好用很多
+
+	2.SpringMVC中取值非常方便
+		1.SpringMVC中获取request对象
+			@RequestMapping("/args.action")
+			public String argsMethod(HttpServletRequest request,Model model){
+				//your action
+				model.addAttribute("msg","this is param:"+name);
+				return "hello";
+			}
+		2.SpringMVC中获取param
+			@RequestMapping("/args.action")
+			public String argsMethod(Model model,String name,int age){
+			model.addAttribute("msg","this is param name:"+name+";age="+age);
+				return "hello";
+			}
+			1.方法内的参数名要和请求参数名一致否则将取不到值
+			2.方法参数若为int时，请求参数里必须要有该参数，否则会报错，为String的话只会找不到而已，获取到null。
+			Optional int parameter 'age' is present but cannot be translated into a null value due to being declared as a primitive type. Consider declaring it as object wrapper for the corresponding primitive type.		--因为参数是int型，无法为空，必须要有值，若为integer类型，也可以没有该参数，这时同String一样，只会获取到null
+
+10.SpringMVC中的页面跳转问题
+	通常情况下，需要经过内部跳转，才能放问到WEB-INF下的资源。
+	//页面跳转	
+	@RequestMapping("/toAddUser.action")
+	public String toAddUser(){
+		return "user";
+	}
+
+11.SpringMVC中对象封装问题
+	1.SpringMVC中的参数名称，必须要与用户提交的参数名称一致
+	2.SpringMVC中支持对象参数接受，要求属性中必须添加setXX()方法，并且页面提交的name属性的值和setXXX()后的XXX一致(必须要求属性一致)
+	
+	
+	3.SpringMVC可以为对象的引用赋值
+
+		<tr align="center">
+			<td>年龄:</td>
+			<td><input type="text" name="info.age"/></td>
+   		</tr>
+
+12.SpringMVC封装日期
+	SpringMVC可以自动封装格式为:2017/05/16这样的日期
+	SpringMVC可以自定义日期转化格式:2017-05-17这样的日期
+	
+	//初始化绑定
+	@InitBinder
+	public void InitBinder (ServletRequestDataBinder binder){
+		binder.registerCustomEditor(
+			java.util.Date.class, 
+			new CustomDateEditor(new SimpleDateFormat("yyyy-MM-dd"), true));
+	}
+	说明:只要在当前类中添加了这个方法，那么这个Controller中都可以实现日期的自动转化
+	如果需要转的类的个数较多时，可以将其封装到基类中，子类继承即可
+
+13.同名提交问题
+	<td>
+   		<input type="checkbox" name="hobbys" value="足球"/>足球
+   		<input type="checkbox" name="hobbys" value="篮球"/>篮球
+   		<input type="checkbox" name="hobbys" value="唱歌"/>唱歌
+   		<input type="checkbox" name="hobbys" value="游泳"/>游泳
+   	</td>
+	1.String类型接收
+		public String addUserBean(User user,String hobbys,Model model){
+			sysout(hobbys);
+		}
+		sysout:足球, 篮球, 羽毛球, 游泳
+		如果SpringMVC中同名提交时，参数用String类型接收那么就会自动拼接字符串，中间用逗号隔开
+	2.StringArray类型接收
+		public String addUserBean(User user,String[] hobbys,Model model){
+			System.out.println(Arrays.toString(hobbys));
+			for (String string : hobbys) {
+				System.out.println(string);
+			}
+		}
+		sysout:
+			[足球, 篮球, 羽毛球, 游泳]
+			足球
+			篮球
+			羽毛球
+			游泳
+		如果用数组进行接收，那么会按照提交顺序，自动封装到数组中
+14.转发和重定向
+	转发:
+		一次请求一次响应，实现资源的跳转
+		浏览器地址不发生改变
+		
+		//		转发到Hello上
+		return "forward:/toHello.action";
+	重定向:
+		多次请求多次响应
+		浏览器地址发生改变
+
+		//		重定向到hello页面上
+		return "redirect:/toHello.action";
+
+		由于hello.jsp在WEB-INF下，所以通过toHello.action跳转过去
+
+15.restFul结构
+	Url: id:端口/项目名/addUser.action?name=tom&age=19
+	缺点:
+		传输过程中必须添加属性名称，如果不写那么参数获取不到
+
+		在项目大的时候参数量将会很大，此时再带上参数名称的话，会有资源的浪费，所以衍生出了下面这种结构
+	restFul结构
+	Url: id:端口/项目名/addUser/tom/19.action
+
+	@RequestMapping("/rest/{name}/{age}.action")
+	public String rest(@PathVariable String name,@PathVariable Integer age,Model model){
+		String msg="this is param:"+name+";age:"+age;
+		model.addAttribute("msg",msg);
+		return "hello";
+	}
+
+	规则:
+		参数与参数之间用/分割
+		Controller接收参数中使用{}包裹，之后使用@PathVariable注解进行赋值
+
+**注意:SpringMVC传值要求，页面中的属性值必须与接收参数的值一致

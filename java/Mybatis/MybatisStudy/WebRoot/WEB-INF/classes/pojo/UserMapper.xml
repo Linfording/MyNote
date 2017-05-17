@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+	namespace=""唯一表示当前的映射文件 id
+	Mapper的主要作用:
+		1.将结果集完成自动映射
+		2.编写sql语句
+  -->
+<mapper namespace="pojo.UserMapper">
+<!--Mybaits中不同的sql语句对应不同的标签  
+	<insert id=""></insert>
+	<delete id=""></delete>
+	<select id=""></select>
+	<update id=""></update>
+-->
+	<!--查询用户全部信息  -->
+	<select id="findAll" resultType="pojo.User">
+		select * from user
+	</select>
+	<select id="findAllById" resultType="pojo.User">
+		select * from user where id=#{aaaid}
+	</select>
+	
+	<select id="findUserByAge" resultType="pojo.User">
+		<![CDATA[select * from user where age>#{minAge} and age<#{maxAge}]]>
+	</select>
+	<!--测试数据库中的列名使用  -->
+	<select id="findUserOrderByAge" resultType="pojo.User">
+		select * from user ORDER BY ${column} desc
+	</select>
+	<!--动态查询  -->
+	<select id="DynamicSelect" resultType="pojo.User">
+		select * from user
+		<where>
+			<if test="id != null">id=#{id} </if>
+			<if test="name != null">and name=#{name}  </if>
+			<if test="age != null">and age=#{age}  </if>
+			<if test="sex != null">and sex=#{sex} </if>
+		</where>
+	</select>
+	
+	<!--用户新增  -->
+	<update id="addUser">
+		insert into user values (null,#{name},#{age},#{sex})
+	</update> 
+	
+	<!--用户修改  -->
+	<update id="updateUser">
+		update user set name=#{name},age=#{age},sex=#{sex} where id=#{id}
+	</update>
+	
+	<!--动态更新  -->
+	<update id="DynamicUpdateUser">
+		update user
+		<set>
+			<if test="name != null">name=#{name},</if>
+			<if test="age !=null ">age=#{age},</if>
+			<if test="sex !=null">sex=#{sex} </if>
+		</set>
+		where id=#{id}
+	</update>
+	
+	<!--批量删除 
+		collection:传入的值类型
+			数组: 	array
+			List集合	list
+			Map集合	map中的key
+		
+		open:(		开头
+		close:)		结尾
+		item:id		代表当前变量
+		separator:,	分隔符
+	 -->
+	<delete id="deleteUsers">
+		delete from user where id in
+		<foreach collection="array" open="(" close=")" item="id" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+	
+	<select id="selectIn" resultType="pojo.User">
+		select * from user where id in
+		<foreach collection="ids" open="(" close=")" item="id" separator=",">
+			#{id}
+		</foreach>
+	</select>
+	
+</mapper>

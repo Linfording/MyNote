@@ -1,0 +1,377 @@
+day08
+1.容器调用关系
+	Spring容器是一个父级容器，管理Service层和Dao层
+	SpringMVC容器是一个子级容器，管理Controller层
+	子级容器可以在Controller中注入Service。
+	禁止将子容器中的内容注入父类中--Service中禁止注入Controller
+	SpringMVC框架与Spring框架能够做到无缝集成
+2.SpringMVC文件上传
+	2.1准备页面，页面中必须配置文件上传的属性
+		(1) 必须为文件上传input 提供name属性，否则文件上传内容不会被表单提交 
+		(2) 表单的提交方式必须为post （get提交数据在url地址上显示，有长度限制） 
+		(3) 表单必须设置enctype=multipart/form-data 
+		表单只有添加enctype=multipart/form-data配置才能允许上传文件
+		input只有添加了name才会被提交
+	2.2配置文件解析器
+		<!--文件上传解析器  -->
+		<bean id="multipartResolver"  class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+			<!-- 最大上传量10M --> 
+			<property name="maxUploadSize" value="10485760"></property>
+		</bean>
+		id是固定的
+
+	2.3编写上传文件处理
+		@RequestMapping("/photo.action")
+		public String photo(MultipartFile photo) throws IOException{
+			/*FileOutputStream outputStream=
+					new FileOutputStream(new File("E:\\图片样例\\"+photo.getOriginalFilename()));
+			outputStream.write(photo.getBytes());
+			outputStream.close();
+			手动编写
+			*/
+
+			//file工具类
+			FileUtils.writeByteArrayToFile(new File("E:\\图片样例\\"+photo.getOriginalFilename()), 
+					photo.getBytes());
+			return "hello";
+		};
+		参数名和input name=“photo”要一致
+3.JDBC使用缺点
+	1.使用JDBC时，需要手动的实现结果封装
+	2.原生的事务控制需要人为的调用，后期使用Spring的声明式事务处理能够解决
+	3.JDBC没有JPA(自动的对象关系映射)的功能
+
+	4.Hibernate将JPA具体的实现了,能够通过操作对象来操作数据库,让程序员更加方便的调用执行.
+		缺点:Hibernate进行数据库操作的时候，多了很多冗余的sql操作(为了安全性进行的数据校验操作)，当数据量大，访问量大的时候，Hibernate的效率将会非常低下，远远不如原生JDBC
+		性能较低总结:
+			1.执行sql时，含有冗余的sql语句
+			2.数据量庞大的时，查询效率较低
+
+4.Mybatis
+	1.特点:能够实现自动的结果集封装
+		操作原生的sql语句
+	2.Mybatis基本介绍
+		Mybatis里的数据库连接:SqlSessioin对象
+		
+		SqlSessioFactory:
+			作用:生产SqlSeesion用
+
+		SqlMapConfig.xml配置文件--核心配置文件
+			1.数据源的配置
+			2.配置事务控制
+			3.配置缓存
+
+		XXXMapper.xml配置文件--映射配置文件
+			1.结果集和对象的映射关系
+			2.编写sql语句
+			一个表对应一个映射文件
+
+	3.Mybatis调用过程:
+		Mybatis启动时，先加载配置文件Config,Mapper。通过配置文件加载获取SqlSessionFactory对象，生产SqlSession，执行CURD操作。
+
+5.Mybatis入门
+	1.导包
+	2.配置SqlMapConfig.xml
+		2.1配置约束
+			<?xml version="1.0" encoding="UTF-8" ?>
+			<!DOCTYPE configuration
+			PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+			引入DTD约束
+		2.2配置数据源
+			<configuration>
+			<!-- 配置数据源
+				default:默认的数据库连接,切换数据库将变得非常方便
+			-->
+				<environments default="mysql">
+					<environment id="mysql">
+						<transactionManager type="JDBC" />
+						<!--连接池  -->
+						<dataSource type="POOLED">
+							<property name="driver" value="com.mysql.jdbc.Driver" />
+							<property name="url" value="jdbc:mysql://localhost:3306/mybatis?characterEncoding=utf-8" />
+							<property name="username" value="root" />
+							<property name="password" value="root" />
+						</dataSource>
+					</environment>
+					<environment id="oracle">
+						<transactionManager type="JDBC" />
+						<dataSource type="POOLED">
+							<property name="driver" value="oracle.jdbc.driver.OracleDriver" />
+							<property name="url" value="jdbc:oracle:thin:@127.0.0.1:1521:XE" />
+							<property name="username" value="ht1602" />
+							<property name="password" value="htdb" />
+						</dataSource>
+					</environment>
+				</environments>
+			</configuration>
+			数据源的配置可以配置多个数据源，切换数据库将非常灵活
+		2.3管理映射文件:
+			<configuration>
+				<!-- 映射文件 -->
+				<mappers>
+					<mapper resource="pojo/UserMapper.xml" />
+				</mappers>
+			</configuration>
+	3.配置映射文件UserMapper.xml
+		3.1 约束
+			<?xml version="1.0" encoding="UTF-8" ?>
+			<!DOCTYPE mapper
+			PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		3.2 UserMapper.xml内容
+			<!--
+			namespace=""唯一表示当前的映射文件 id
+			Mapper的主要作用:
+				1.将结果集完成自动映射
+				2.编写sql语句
+		  	-->
+		  	<mapper namespace="pojo.UserMapper">
+			<!--Mybaits中不同的sql语句对应不同的标签  
+				<insert id=""></insert>
+				<delete id=""></delete>
+				<select id=""></select>
+				<update id=""></update>
+			-->
+			</mapper>
+		3.3编写sql语句
+			<mapper namespace="pojo.UserMapper">
+				<!--查询用户全部信息  -->
+				<select id="findAll" resultType="pojo.User">
+					select * from user
+				</select>
+				<select id="findAllById" resultType="pojo.User">
+					select * from user where id='7'
+				</select>
+			</mapper>
+		3.4 javabeen
+		public class User {
+			private Integer id;
+			private String name;
+			private Integer age;
+			private String sex;
+			@Override
+			public String toString() {
+				return "User [id=" + id + ", name=" + name + ", age=" + age + ", sex="
+						+ sex + "]";
+			}
+		}
+	4.初级调用
+		@Test
+		public void test01() throws IOException{
+			//读取核心配置文件sqlMapConfig.xml
+			InputStream inputStream=Resources.getResourceAsStream("sqlMapConfig.xml");
+			//获取SqlSessionFactory对象
+			SqlSessionFactory sessionFactory=new SqlSessionFactoryBuilder().build(inputStream);
+			//获取SqlSession
+			SqlSession sqlSession = sessionFactory.openSession();
+			//调用"namespace+id"
+			List<User> userList = sqlSession.selectList("pojo.UserMapper.findAll");
+			for (User user : userList) {
+				System.out.println(user);
+			}
+		}
+		@Test
+		public void test02() {
+		//获取SqlSession
+			SqlSession sqlSession = sessionFactory.openSession();
+			User user = sqlSession.selectOne("pojo.UserMapper.findAllById");
+			System.out.println(user);
+		}
+	5.工作原理
+		1.加载核心配置文件，里面会自动连接数据库，并且会自动加载配置好的映射文件
+		2.通过SqlSessionFactory获取SqlSession
+		3.通过SqlSession调用方法执行sql时，输入的namespace确定是哪个映射文件，再根据ID找到映射文件中的sql语句
+		4.执行sql语句，根据配置好的映射兑现，自动实现对象的封装。
+	补充:
+		1.POJO:不加get，set的普通javabeen
+		2.log4j:日志jar包
+			log4j专门用来实现日志打印的,可以配置不同的打印粒度,实现不同日志文件的打印
+			在配置文件中,名称必须为log4j.properties,否则无法加载
+			只要程序启动,就会自动加载log4j.properties,无需手动调用
+		3.在整合框架之后，核心配置文件将无需配置数据源管理，交由spring进行管理，只需配置映射文件
+		4. @Before--org.junit.Before;
+			该注解的作用是，当执行任意@Test方法时，都会先执行该方法，用来做test方法的初始化
+		5.XML转义
+			<  &lt;
+			>  &gt;
+			&  &amp;
+			"  &quot;
+			'  &apos;
+			<![CDATA[内容]]>
+6.Mybatis动态赋值
+	1.在Mybatis中可以通过#{值}赋值
+		值:
+		1.如果传递的是对象，那么写的是对象的属性
+			局限性较大。只适用于新增和修改
+		2.如果直接传入参数，那么该值可以任意
+
+		example_1:
+			insert into user values (null,#{name},#{age},#{sex})
+			int rows = sqlSession.insert("pojo.UserMapper.addUser",user);
+		
+		example_2:
+			select * from user where id=#{ababa}
+			User user = sqlSession.selectOne("pojo.UserMapper.findAllById",6);
+			
+	2.拥有预编译的效果
+		2017-05-17 15:22:37,599 [main] DEBUG [pojo.UserMapper.findAllById] - ==>  Preparing:select * from user where id=? 
+		2017-05-17 15:23:07,744 [main] DEBUG [pojo.UserMapper.addUser] - ==>  Preparing: insert into user values (null,?,?,?) 
+		建议使用
+	3.会为参数添加""
+	
+	
+7.Mybatis中多值传递问题
+	在Mybatis中，只允许传递单个参数，禁止传递多个参数，这时需要将多个参数转化为一个参数
+
+	6.1使用对象接收
+		可以通过对象进行封装，通过#{属性}获取对应的参数值
+		局限性较大。只适用于新增和修改
+	6.2 Map<String,Object>
+		通常情况下,如果使用对象封装不足以满足要求，这时首选map进行封装
+
+	example:
+		<select id="findAllByAge" resultType="pojo.User">
+			select * from user where age>#{minAge} and age&lt;#{maxAge}
+			<![CDATA[select * from user where age>#{minAge} and age<#{maxAge}]]>
+		</select>
+	
+		//	根据年龄查找    4000>age>150
+		@Test
+		public void test05() {
+			SqlSession sqlSession = sessionFactory.openSession();
+			
+			Map<String, Object> map=new HashMap<String, Object>();
+			map.put("minAge", 150);
+			map.put("maxAge", 4000);
+			
+			List<User> userList = sqlSession.selectList("pojo.UserMapper.findAllByAge",map);
+			for (User user : userList) {
+				System.out.println(user);
+			}
+		}
+
+
+8.Mybaits中以列名为参数的问题
+	如果Mybatis中需要以列名(字段名)为参数时，那么这时需要使用${},必须配合map使用
+
+	select * from user ORDER BY ${column} desc
+
+	//	根据年龄排序
+	@Test
+	public void test06() {
+		SqlSession sqlSession = sessionFactory.openSession();
+		
+		Map<String, String> map=new HashMap<String, String>(); 
+		map.put("column", "age");
+		
+		List<User> userList = sqlSession.selectList("pojo.UserMapper.findUserOrderByAge",map);
+		for (User user : userList) {
+			System.out.println(user);
+		}
+	}
+
+	map的key，要和${key}中的key一致
+
+	2017-05-17 16:02:57,721 [main] DEBUG [pojo.UserMapper.findUserOrderByAge] - ==>  Preparing: select * from user ORDER BY age desc 
+	除获取字段时，不要用${}，尽量使用#{}，因为${}没有预编译的效果
+
+9.动态更新操作
+	动态更新:
+		在做修改时,只想修改对象中赋值的参数，如果对象参数为null,则该参数无需修改
+	Mybatis中如果想做到动态更新，if标签+set标签
+		<!--动态更新  -->
+		<update id="DynamicUpdateUser">
+			update user
+			<set>
+				<if test="name != null">name=#{name},</if>
+				<if test="age !=null ">age=#{age},</if>
+				<if test="sex !=null">sex=#{sex} </if>
+			</set>
+			where id=#{id}
+		</update>
+
+		if标签判断属性有值时，才加上
+		set标签解决逗号多余的问题，在sex=null的时候，age的将作为where前的条件，这时会跟着一个逗号，如果使用普通的set将会拼接成错误的sql语句。使用set标签会自动的帮你处理掉where前的一个逗号
+		//	测试动态更新
+		@Test
+		public void test07() {
+			User user=new User();
+			user.setId(21);
+			//user.setName("黄盖");
+			//user.setAge(189);
+			//user.setSex("男");
+			
+			SqlSession sqlSession = sessionFactory.openSession();
+			
+			int rows=sqlSession.update("pojo.UserMapper.DynamicUpdateUser",user);
+			sqlSession.commit();
+			System.out.println(rows);
+		}
+10.动态查询
+	动态查询:
+	<!--动态查询  -->
+	<select id="DynamicSelect" resultType="pojo.User">
+		select * from user
+		<where>
+			<if test="id != null">id=#{id} </if>
+			<if test="name != null">and name=#{name}  </if>
+			<if test="age != null">and age=#{age}  </if>
+			<if test="sex != null">and sex=#{sex} </if>
+		</where>
+	</select>
+	Mybatis中动态查询，if标签+where标签
+	
+	//	测试动态查询
+	@Test
+	public void test08() {
+		User user=new User();
+	//	user.setId(21);
+		user.setName("黄盖");
+		user.setAge(189);
+		user.setSex("男");
+		
+		SqlSession sqlSession = sessionFactory.openSession();
+		
+		List<User> userList = sqlSession.selectList("pojo.UserMapper.DynamicSelect", user);
+		for (User user2 : userList) {
+			System.out.println(user2);
+		}
+	}
+11.批量删除
+	id>xx  and id<xx
+	id in(xx,xx,xx)
+	
+	<!--批量删除 
+		collection:传入的值类型
+			数组: 	array
+			List集合	list
+			Map集合	map中的key
+		
+		open:(		开头
+		close:)		结尾
+		item:id		代表当前变量
+		separator:,	分隔符
+	-->
+	<delete id="deleteUsers">
+		delete from user where id in
+		<foreach collection="array" open="(" close=")" item="id" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+
+	//	测试批量删除
+	@Test
+	public void test09() {
+		Integer[] ids={1,3,5};
+		//List<>
+		//Map<"ids",List<>/array>
+		SqlSession sqlSession = sessionFactory.openSession();
+		
+		//int rows=sqlSession.delete("pojo.UserMapper.deleteUsers", ids);
+		int rows=sqlSession.delete("pojo.UserMapper.deleteUsers", map);
+		sqlSession.commit();
+		System.out.println(rows);
+	}
+12.其他的标签，查询API吧
