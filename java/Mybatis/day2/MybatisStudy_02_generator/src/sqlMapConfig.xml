@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<!--开启二级缓存  -->
+	<settings>
+		<setting name="cacheEnabled" value="true"/>
+	</settings>
+
+<!--定义别名标签  -->
+	<typeAliases>
+		<!--
+			alias=""别名	一般为类名
+			type=""类型	包名.类名
+		  -->
+		<typeAlias alias="User" type="pojo.User"/>
+	</typeAliases>
+	
+
+	
+<!-- 配置数据源
+	default:默认的数据库连接,切换数据库将变得非常方便
+-->
+	<environments default="mysql">
+		<environment id="mysql">
+			<transactionManager type="JDBC" />
+			<!--连接池  -->
+			<dataSource type="POOLED">
+				<property name="driver" value="com.mysql.jdbc.Driver" />
+				<property name="url" value="jdbc:mysql://localhost:3306/mybatis?characterEncoding=utf-8" />
+				<property name="username" value="root" />
+				<property name="password" value="root" />
+			</dataSource>
+		</environment>
+		
+		<environment id="oracle">
+			<transactionManager type="JDBC" />
+			<dataSource type="POOLED">
+				<property name="driver" value="oracle.jdbc.driver.OracleDriver" />
+				<property name="url" value="jdbc:oracle:thin:@127.0.0.1:1521:XE" />
+				<property name="username" value="ht1602" />
+				<property name="password" value="htdb" />
+			</dataSource>
+		</environment>
+	</environments>
+	
+	
+	<!-- 映射文件 -->
+	<mappers>
+		<mapper resource="pojo/UserMapper.xml" />
+	</mappers>
+
+</configuration>

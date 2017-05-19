@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.DeptMapper">
+	<resultMap type="Dept" id="deptResultMapper" autoMapping="true">
+		<id column="dept_id" property="deptId"/>
+		<result column="dept_name" property="deptName"/>
+		<collection property="users" ofType="User">
+			<id column="id" property="id"/>
+			<result column="name" property="name"/>
+			<result column="age" property="age"/>
+			<result column="sex" property="sex"/>
+		</collection>
+	</resultMap>
+	<sql id="deptColumnList">
+		dept.dept_id,dept.dept_name
+	</sql>
+	<!--查询一个部门下的全部员工  -->
+	<select id="findAll" resultMap="deptResultMapper">
+		select <include refid="deptColumnList"/>,user.id,user.name,user.age,user.sex from 
+		user
+			LEFT JOIN
+		dept 
+			on `user`.dept_id=dept.dept_id 
+	</select>
+</mapper>

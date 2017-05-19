@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.StudentMapper">
+	<resultMap type="Student" id="studentResultMap" autoMapping="true">
+		<id column="student_id" property="id"/>
+		<result column="s_name" property="name"/>
+		<result column="s_age" property="age"/>
+		<collection property="teacherList" ofType="Teacher">
+			<id column="teacher_id" property="id"/>
+			<result column="t_name" property="name"/>
+			<result column="t_sex" property="sex"/>
+		</collection>
+	</resultMap>
+	<select id="findAll" resultMap="studentResultMap">
+		select student.s_name,student.s_age,t.* from student 
+		LEFT JOIN
+		(
+		select teacher.t_name,t_sex,s_t.* from  teacher
+			LEFT JOIN
+		s_t
+			on teacher.t_id=s_t.teacher_id)t
+		on student.s_id=t.student_id
+	</select>
+</mapper>

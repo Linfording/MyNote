@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd" >
+<generatorConfiguration>
+	<!--引入资源文件  -->
+	<properties resource="generatorConfig.properties"/>
+	
+	<!--手动导入驱动包  -->
+	<classPathEntry location="E:\tools\mysql-connector-java-5.1.7-bin.jar" />
+	
+	<context id="linfon">
+		
+		<commentGenerator>
+			<property name="suppressAllComments" value="${suppressAllComments}"/>
+		</commentGenerator>
+		<jdbcConnection driverClass="${driverClass}" connectionURL="${url}" userId="${username}" password="${password}" />
+	
+		<javaModelGenerator targetPackage="${modeltargetPackage}" targetProject="${targetProject}" />
+		
+		<sqlMapGenerator targetPackage="${sqltargetPackage}" targetProject="${targetProject}" />	
+		<javaClientGenerator targetPackage="${clienttargetPackage}" targetProject="${targetProject}" type="XMLMAPPER" /> 
+
+		<!--要操作哪些表  -->
+		<table schema="" tableName="user" />
+	</context>
+</generatorConfiguration>

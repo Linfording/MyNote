@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.UserMapper">
+	<!--定义一个resultMap  
+		type=""		主表对象要封装的类型：user
+	-->
+	<resultMap type="User" id="userResultMap" autoMapping="true">
+		<!--id标签:主键的封装  -->
+		<id column="id" property="id"  />
+	    <!--一对一关联封装  -->
+	    <association property="dept" javaType="Dept" >
+	    	<id column="dept_id" property="deptId" />
+	    	<result column="dept_name" property="deptName"/>
+	    </association>
+	</resultMap>
+	<sql id="userColumnList">
+		user.id ,user.name ,user.age ,user.sex ,user.dept_id
+	</sql>
+	
+	<select id="findAll" resultMap="userResultMap">
+		select  <include refid="userColumnList"/> , dept.dept_name from 
+		user 	
+			LEFT JOIN 
+		dept
+			on user.dept_id=dept.dept_id;
+	</select>
+</mapper>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- <mapper namespace="pojo.UserMapper"> -->
+<mapper namespace="mapper.UserMapper">
+	<!--表示当前映射文件使用二级缓存  -->
+	<cache/>
+	
+	<!--sql复用 -->
+	<sql id="userSql">
+		select * from user
+	</sql>
+	
+	<select id="findAll" resultType="User">
+		<include refid="userSql"/>
+	</select>
+	<select id="findById" resultType="User">
+		<include refid="userSql"/> where id=#{id}
+	</select>
+	<select id="findUserByName" resultType="User">
+		<include refid="userSql"/> where name=#{name}
+	</select>
+	<select id="findByAge" resultType="User">
+		<include refid="userSql"/> where age>#{minAge} and age&lt;#{maxAge}
+	</select>
+	<select id="findOrderByAge" resultType="User">
+		<include refid="userSql"/> Order by ${age} desc
+	</select>
+	<select id="findUserByAge" resultType="User">
+		<include refid="userSql"/> where age=#{age}
+	</select>
+</mapper>
