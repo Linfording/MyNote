@@ -1,0 +1,9 @@
+不知道账户密码登录：
+	1.conn /as sysdba
+	2.connect loginname /as sysdba
+	conn同connect
+普通用户登录
+	1.connect scott/123456  或
+	2.connect scott/123456@servername
+查看oracle端口号:
+	lsnrctl status

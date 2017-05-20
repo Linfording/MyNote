@@ -1,0 +1,174 @@
+汇通day1
+1.传统的web项目:
+	1.传统的web项目管理jar包比较麻烦
+		情况:
+			1.缺jar包
+			2.jar包冲突
+	2.web项目打包比较繁琐
+	3.传统项目打包之后需要将test测试类进行手动删除。
+
+2.Maven：
+	Maven是apache一款一站式的项目管理工具。可以做到一键构建项目，自动引入依赖Jar包，结局jar包冲突的问题。
+
+
+	Apache Maven，是一个软件（特别是Java软件）项目管理及自动构建工具，由Apache软件基金会所提供。基于项目对象模型（缩写：POM）概念，Maven利用一个中央信息片断能管理一个项目的构建、报告和文档等步骤。
+	
+	POM是Maven项目的标识符，只有Maven项目中含有POM文件，在POM文件中需要添加定义jar包。
+
+3.Maven下载:
+	http://maven.apache.org/download.cgi
+
+	1.部署Maven环境:
+		解压
+	2.配置环境变量
+		1.要有JDK
+		2.配置Maven
+			1.系统环境变量
+				MAVEN_HOME
+				E:\WorkJarSource\Maven\apache-maven-3.5.0
+			2.path添加
+				;%MAVEN_HOME%/bin
+		3.测试是否配置成功
+			mvn -v
+			mvn -version
+			显示以下则成功:			
+				Apache Maven 3.5.0 (ff8f5e7444045639af65f6095c62210b5713f426; 2017-04-04T03:39:06+08:00)
+				Maven home: E:\WorkJarSource\Maven\apache-maven-3.5.0\bin\..
+				Java version: 1.7.0_15, vendor: Oracle Corporation
+				Java home: C:\Program Files\Java\jdk1.7.0_15\jre
+				Default locale: zh_CN, platform encoding: GBK
+				OS name: "windows 7", version: "6.1", arch: "amd64", family: "windows"
+		
+		4.用户/.m2文件夹
+4.安装Eclipse
+	Eclipse是开源的免费产品，安装插件时非常的方便。
+	1.解压eclipse
+	2.初始配置
+		1.JDK配置
+		preference--java--installed jres--add standard vm
+		2.字符集配置
+		preference--general--workspace--text file encoding:utf-8
+5.Eclipse关联Maven
+	perference--Maven--
+		1.Installations--Add
+		E:\WorkJarSource\Maven\apache-maven-3.5.0
+
+		2.User Settings
+			Global Settings(全局Settings):
+				E:\WorkJarSource\Maven\apache-maven-3.5.0\conf\settings.xml
+			User Settings
+				使用默认的，在.m2下
+			---先操作5. 再应用
+			
+6.配置settings文件
+	6.1配置本地仓库
+		<!-- localRepository
+		   | The path to the local repository maven will use to store artifacts.
+		   |
+		   | Default: ${user.home}/.m2/repository
+		  <localRepository>/path/to/local/repo</localRepository>
+		-->
+		<!--本地仓库 -->
+			<localRepository>E:\\WorkJarSource\\Maven\\mavenRepository</localRepository>
+	6.2将全局(maven/conf下)的配置文件settings复制到用户级别下(.m2下)
+
+	上述配置如果生效，Maven工具首先会连接用户级别，如果用户级别生效，会将jar包自动下载到本地仓库中
+
+7.创建Maven项目
+	7.1创建Java项目
+		new  maven project
+		next
+		1.骨架选取:
+			Group Id:组ID/域名
+			Artifact Id:项目名称
+			version:版本号
+			这三个共同构成了Maven仓库的坐标
+			使用:
+				maven-archetype-quickstart--骨架--Java项目			
+		next
+			填写自己项目的上面三个属性
+		finish
+	7.2更改junit包版本
+		查询版本网站:mvnrepository.com
+		<!--所有依赖的jar包，想要添加jar包就去网站上找到相应的添加到这里  -->
+		<dependencies>
+			<!-- https://mvnrepository.com/artifact/junit/junit -->
+			<dependency>
+			    <groupId>junit</groupId>
+			    <artifactId>junit</artifactId>
+			    <version>4.12</version>
+			</dependency>
+		</dependencies>
+	7.3 POM打包方式:
+		POM.xml:
+			<packaging>jar</packaging>
+	7.4 修改jdk
+		properties
+			java build path
+			java compiler
+			
+	7.5创建web项目
+		1.选择骨架:
+			maven-archetype-webapp
+		2.修改参数
+		properties
+			java build path
+			java compiler
+			Project Facets
+				java 1.7
+		3.web结构
+			默认根目录:webapp
+		
+8.Maven的工作原理
+	说明:
+	1.apache维护了一个Maven仓库，该仓库中包含了世界上主流的制式jar包，方便用户下载。
+	2.当使用Maven时，首先会自动联网下载创建项目所依赖的全部文件和jar包。
+	当如果用户需要新的jar包使，Maven会自动的联网下载。自动的下载依赖包
+	3.在文件中含有
+	.pom		保存了一些仓库信息，包括该jar包所依赖的jar包
+	.pom.sha	效验文件，保证jar包下载正确
+	4.jar包下载的原则
+		首先用户先去本地仓库中查找需要的jar包，如果没有，则会联网从中央仓库下载
+		下载后会先保存在本地仓库，方便以后调用。
+	
+9.WEB项目插件方式的搭建
+	问题:如果本地没有tomcat那么项目不能正确的发布。
+	解决方案:可以通过插件的方式，远程下载tomcat插件，进行发布
+		1.引入插件:
+		POM.xml:
+			<!--build只能出现一次 -->
+			<build>
+			<!--插件  -->
+				<plugins>
+					<plugin>
+					<!--坐标  -->
+						<groupId>org.apache.tomcat.maven</groupId>
+						<artifactId>tomcat7-maven-plugin</artifactId>
+						<version>2.2</version>
+						<!--配置  -->
+						<configuration>
+							<!--端口  -->
+							<port>8090</port>
+							<!--项目访问的根目录
+								url: ip:端口/项目名称/action
+								这里/代表项目是个缺省值,访问:
+								url: ip:端口/action
+							  -->
+							<path>/</path>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		2.tomcat启动
+			run configurations:
+				1.Maven build new:
+				Main
+					Name:
+					Base directory:项目
+					Goals:	tomcat7:run
+				JRE	
+					配置jdk
+				Source
+					绑定源码
+				Common
+					修改字符集

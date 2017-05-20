@@ -1,0 +1,2 @@
+将generator目录直接拷贝到MyEclipse Professional\dropins
+重启myeclipse
