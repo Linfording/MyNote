@@ -1,0 +1,44 @@
+jsp中嵌套java代码可以取值成功，那么后台赋值成功，应该是前台页面通过el表达式取值失败。
+
+<tr> <%=request.getAttribute("name")%> </tr>
+<c:forEach items="${userList }" var="user">
+	<tr align="center">
+		<td>${user.id }</td>
+		<td>${user.name}</td>
+		<td>${user.age}</td>
+		<td>${user.sex}</td>
+	</tr>
+</c:forEach>
+
+页面输出:
+xiaozhang 
+
+${user.id } 	${user.name} 	${user.age} 	${user.sex}
+
+
+
+在使用el表达式的jsp中配置：
+
+<%@page isELIgnored="false" %>
+
+该设置代表在本jsp中使用el表达式，可以解析其中的值。若isELIgnored设置为true，代表在本页不使用el表达式，当做字符串解析出来显示。此时，el表达式正常工作，显示正常。
+
+此问题和servlet版本有关
+
+isELIgnored的值取决于web应用部署描述符的版本。使用Servlet2.4的描述符的JSP页面默认是解析EL表达式，即表达式有效。这默认提供了大部分应用想要的情况。而使用Servlet2.3或者更早的描述符的JSP页面默认是忽略EL表达式的，即不解析EL表达式，这样就提供了向后兼容性。
+
+也就是说，描述符2.4或者更新的版本，isELIgnored默认值为false，而2.3或者 更早的版本isELIgnored默认值为true。就导致了出现EL表达式无效的情况。 
+
+
+网上还有一个解决方案，本人未测试： 
+在web.xml文件中添加如下配置：
+
+<jsp-config>
+    <jsp-property-group>
+        <url-pattern>*.jsp</url-pattern>
+        <el-ignored>false</el-ignored>
+        <scripting-invalid>true</scripting-invalid>
+    </jsp-property-group>
+</jsp-config>
+
+目测应该好使，原理也是设置jsp的el表达式是否可用。
