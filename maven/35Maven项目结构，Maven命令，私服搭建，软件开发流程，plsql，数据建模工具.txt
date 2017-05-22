@@ -1,0 +1,149 @@
+HTday02
+1.Maven项目的文件结构
+	在Maven项目中，能够根据不同文件的类型，实现分文件存储
+	src/main/java		全部的源码		.java文件
+	src/main/resource	全部的配置文件	.xml/.properties
+	src/test/java		测试用例
+	src/main/webapp		全部的页面,静态资源文件
+
+2.Maven命令
+	说明:如果手动执行Maven命令必须在与pom.xml同级的根目录
+
+	1.mvn clean		清空target文件夹(清空class文件)
+	2.mvc compile	编译命令(生成class)
+	3.mvn package	打包命令
+	4.mvn site		形成jar包依赖的文档
+	5.mvn install	清空,编译,打包一键完成
+3.私服搭建
+	功能
+		1.实现jar包共享
+		2.架构师提供的jar包共享在私服
+
+	工作原理:
+		私服中如果有该jar包，直接给用户使用，如果没有jar包将会联网下载，保存在私服里然后提供给用户。下次另个用户再请求该jar包时，私服直接给用户即可。
+
+	搭建:
+		E:\WorkJarSource\Maven\nexus\nexus-2.12.0-01\bin\jsw\windows-x86-64
+		install-nexus.bat		安装私服
+		start-nexus.bat			启动私服
+		uninstall-nexus.bat		卸载私服
+
+		1.查看当前系统的服务
+			计算机管理--服务--nexus
+			检查系统中是否存在该服务，如果没有则进行安装
+		2.安装nexus服务
+			install-nexus.bat
+			以管理员方式运行
+		3.启动私服
+			start-nexus.bat	
+			以管理员方式运行
+			等待一段时间后，窗口关闭
+		4.测试
+			查看服务状态:nexus--已启动
+			搭建成功
+		5.访问路径
+			http://localhost:8081/nexus
+			login:admin,admin123
+		6.配置私服
+			1.配置镜像文件
+			E:\WorkJarSource\Maven\apache-maven-3.5.0\conf\settings.xml
+			line:147
+
+			<mirror>
+		      <id>nexus</id>
+		      <mirrorOf>*</mirrorOf>
+		      <name>nexus</name>
+		      <url>http://localhost:8081/nexus/content/groups/public/</url>
+
+		       <!--要连接其他人的私服直接通过IP地址链接-->
+		 	 <!-- <url>http://172.16.8.13:8081/nexus/content/groups/public/</url>-->
+
+		    </mirror>
+
+			同时替换掉用户级别settings.xml(user/.m2/settings.xml)
+
+		补充:
+			1.
+				问题:国内下载国外文件速度慢
+				解决方案:通过国内镜像下载
+				阿里云镜像:
+					<mirror>
+					    <id>aliyun</id>
+					    <mirrorOf>aliyun Maven</mirrorOf>
+					    <name>*</name>
+					    <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+					</mirror> 
+			2.jar包因为网络问题下载失败，需要私服搭建者手动删除jar包，如果用户在没有连接私服时，一切正常，在连接私服后创建项目异常，这时用自己的本地仓库即可。
+				
+4.软件开发流程
+	1.需求分析
+	2.总体设计
+	3.详细设计
+	4.开发编程
+	5.测试分析
+	6.系统整合及现场支持
+
+	1.需求分析
+		岗位:产品经理
+		需要将客户的需求转化为代码思维的过程
+		需求分析说明书
+		参与人员:项目经理
+	2.总体设计
+		设计整个项目的架构，划分主要的功能模块，架构师、项目经理
+		设备，系统，ide，jdk，整个环境都会详细的指定
+		形成说明书，总体设计说明书
+	3.详细设计
+		根据总体设计规定的模块，进行细致化的设计的工作，
+		设计数据库，形成数据库字典
+		形成详细设计说明书
+	4.开发编程
+		根据详细设计说明书中的内容进行编码
+	5.测试分析	
+		测试人员
+		测试分类:
+			黑盒测试:
+				不关注代码实现，主要关注数据传入后，是否和预期结果匹配。
+				适用于安全性较低的软件。
+			白盒测试:
+				需要测试人员有一定的编程能力，需要了解程序运行的各个状态
+				对于软件安全较高的才会进行白盒测试
+	6.系统整合及现场支持(打包上线)
+		在上线一周到半个月内，是bug最多的时候
+
+5.Oracle数据库的安装使用
+	Oracle数据库在关系型数据库是比较安全的，该产品是收费的
+	1.安装路径
+	2.口令
+	3.端口情况
+	4.通过工具连接数据库
+		Oracle数据库的连接工具--plsql
+		Mysql数据库连接公爵--SQLyogEnt，navicat
+	5.新建用户
+		-- Create the user 
+		create user htdlf
+		  identified by htdlf
+		  default tablespace USERS;
+		-- Grant/Revoke role privileges 
+		grant connect to htdlf with admin option;
+		grant resource to htdlf with admin option;
+		-- grant dba to htdlf with admin option; dba权限最好不要乱给
+6.PowerDesinger
+	PowerDesinger是现在主流的数据库建模工具，可以通过可视化的界面展现数据库中的表结构，并且能够自动的根据不同的数据库类型，自动的生成sql语句
+	1.安装
+	2.汉化
+	3.使用
+7.数据建模
+	新建模型
+		physicalDataMode
+		Oracle10g
+	palette建表
+		MySql:Int--Oracle:number
+		MySql:varchar(40)--Oracle:varchar2(40)
+		varchar/char:
+			char(40):长度固定字符，如果只输入10个字符长度，剩下30个会用空格占位
+			varchar(40):可变长度字符，如果只输入10字符长度，实际也只会存入10字符长度，40只规定上限。
+	sql:preview
+8.PLSQL的使用:
+9.项目搭建
+	拷贝....
+		
