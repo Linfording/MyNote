@@ -1,0 +1,13 @@
+	history.go(-1)	表示后退与刷星，如果数据有改变也随之改变
+
+	history.back()	只是单纯的返回到上一页
+
+	window.location.reload();	刷新
+
+	window.history.go(1);	前进
+
+	window.history.go(-1);	返回+刷新
+	
+	window.history.forward();	前进
+
+	window.history.back();	返回
