@@ -1,0 +1,3 @@
+org.mybatis.spring.MyBatisSystemException: nested exception is org.apache.ibatis.binding.BindingException: Parameter 'roleId' not found. Available parameters are [1, 0, param1, param2]
+
+接口传入两个参数，而xml只接受一个参数传值，两个参数以上时要记得使用@Param封装到map里

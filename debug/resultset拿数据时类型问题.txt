@@ -1,4 +1,4 @@
-1.
+1.获取mysql添加了unsigned属性的int类型
 @Override
 	public T handle(ResultSet rs) throws SQLException {
 		try {
