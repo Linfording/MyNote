@@ -1,0 +1,57 @@
+1.pom.xml导包
+	
+	<dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+      <--排除springboot自带的logging否则log4j2不生效 -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+	<!--导入log4j2依赖 -->
+	<dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-log4j2</artifactId>
+    </dependency>
+
+2.添加log4j.xml在src/main/resource下
+
+	<?xml version="1.0" encoding="UTF-8"?>
+	<Configuration status="WARN">
+		<!--定义输出类别，详情请看官网
+		还可以将log4j2输出为文件，这个可以自己研究
+		-->
+		<Appenders>
+	    	<!--输出日志到控制台-->
+	        <Console name="Console" target="SYSTEM_OUT">
+	            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %l %msg%n"/>
+	        </Console>
+
+	    </Appenders>
+
+		<!--loggers全局的logger配置-->
+	    <Loggers>
+	    	<!--全局logger的输出级别 为info -->
+	    	//日志的Level分级：TRACE < DEBUG < INFO < WARN < ERROR < FATAL。
+	        <Root level="INFO">
+	            <AppenderRef ref="Console"/>
+	        </Root>
+	        <!--配置指定的logger输出级别-->
+	        <Logger name="top.easylife.mapper" level="DEBUG" additivity="false">       //为dao mapper所在的包，level为DEBUG
+	            <AppenderRef ref="Console"/>
+	        </Logger>
+	    </Loggers>
+	</Configuration>  
+	
+3.配置application.yml指定log4j2的配置路径
+	logging:
+  		config: classpath:log4j.xml
+  		
+http://blog.csdn.net/wy978651775/article/details/52911571
+http://www.jb51.net/article/113567.htm
+Log4j2的Github地址：https://github.com/apache/logging-log4j2

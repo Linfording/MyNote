@@ -1,0 +1,10 @@
+git@176.129.1.40:/home/data/git/newHome/base.git
+git@176.129.1.40:/home/data/git/newHome/basedata.git
+git@176.129.1.40:/home/data/git/newHome/basedata-web.git
+git@176.129.1.40:/home/data/git/newHome/framwork.git
+git@176.129.1.40:/home/data/git/newHome/house.git
+git@176.129.1.40:/home/data/git/newHome/house-web.git
+git@176.129.1.40:/home/data/git/newHome/parent.git
+git@176.129.1.40:/home/data/git/newHome/rent.git
+git@176.129.1.40:/home/data/git/newHome/rent-web.git
+git@176.129.1.40:/home/data/git/newHome/view.git

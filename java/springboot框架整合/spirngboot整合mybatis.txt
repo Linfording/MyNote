@@ -1,0 +1,113 @@
+http://blog.csdn.net/catoop/article/details/50553714
+
+http://blog.csdn.net/isea533/article/details/50359390
+
+1.导包
+    <!--整合MyBatis的核心依赖mybatis-spring-boot-starter-->
+    <dependency>
+      <groupId>org.mybatis.spring.boot</groupId>
+      <artifactId>mybatis-spring-boot-starter</artifactId>
+      <version>1.3.0</version>
+    </dependency>
+
+
+    <!--spring-boot-starter-test用来做单元测试验证数据访问-->
+    <dependency>
+      <groupId>org.mybatis.spring.boot</groupId>
+      <artifactId>mybatis-spring-boot-starter-test</artifactId>
+      <version>1.3.0</version>
+    </dependency>
+2.application.yml
+	配置数据源
+	spring:
+	  datasource:
+	    driver-class-name: com.mysql.jdbc.Driver
+	    username: root
+	    password: root
+	    url: jdbc:mysql://localhost:3306/housemanager
+	视图解析器
+	  mvc:
+	    view:
+	      prefix: /WEB-INF/
+	      suffix: .jsp
+	  http:
+	    encoding:
+	      force: true
+	mybatis整合配置
+	mybatis:
+	  type-aliases-package: com.aimashi.pojo
+	  config-location: classpath:/mybatis/mybatis-config.xml
+	  mapper-locations: classpath:/mybatis/mapper/*.xml
+	  
+3.mybatis-config.xml:src/main/resource/
+	<?xml version="1.0" encoding="UTF-8" ?>
+	<!DOCTYPE configuration
+	        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+	        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+	<configuration>
+	    <settings>
+	        <!-- 开启驼峰自动映射 -->
+	        <setting name="mapUnderscoreToCamelCase" value="true" />
+	    </settings>
+	</configuration>
+4.springboot入口:
+	@SpringBootApplication
+	@MapperScan("com.aimashi.mapper")//扫描mapper包不用再添加mapper注解，自动实现接口代理
+	public class SpringbootApplication {
+
+		public static void main(String[] args) {
+			SpringApplication.run(SpringbootApplication.class, args);
+		}
+	}
+===============================================================
+测试使用:
+	mapper:
+		public interface DeptMapper {
+	    List<Dept> findAllDept();
+		}
+	mapper.xml:
+		<?xml version="1.0" encoding="UTF-8" ?>
+		<!DOCTYPE mapper
+		        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		<mapper namespace="com.aimashi.mapper.DeptMapper">
+
+		    <resultMap type="Dept" id="deptRM" autoMapping="true">
+		        <id column="DEPT_ID" property="deptId"/>
+		        <association property="parentDept" javaType="Dept">
+		            <id column="P_ID" property="deptId"/>
+		            <result column="P_NAME" property="deptName"/>
+		        </association>
+		    </resultMap>
+
+		    <select id="findAllDept" resultMap="deptRM">
+		       select t.dept_id,t.dept_name,t.state,t.parent_id p_id,p.dept_name p_name from dept t left join dept p on t.parent_id=p.dept_id order by t.dept_id asc
+		    </select>
+
+		</mapper>
+	sql:
+		create table DEPT
+		(
+		   DEPT_ID              varchar(40) not null,
+		   PARENT_ID            varchar(40) comment '自关联，多对一',
+		   DEPT_NAME            varchar(50),
+		   STATE                INT comment '1启用0停用',
+		   CREATE_BY            varchar(40),
+		   CREATE_DEPT          varchar(40),
+		   CREATE_TIME          TIMESTAMP,
+		   UPDATE_BY            varchar(40),
+		   UPDATE_TIME          TIMESTAMP,
+		   primary key (DEPT_ID)
+		);
+	Test:
+		@Autowired
+		DeptMapper deptMapper;
+		public void test01(){
+			sysout(deptMapper.findAllDept());
+		}
+
+**ps:
+	@Autowired
+	DeptMapper deptMapper;
+
+	idea中DeptMapper的注入会提示有错，不过不用担心，这是spring的友情提示无法正常注入，因为并没有通过注解标明mapper接口的实现类，这样spring找不到。但是Mybatis使用Mapper.xml代理的形式实现了接口，所以其实是可以正常注入的并不影响使用。

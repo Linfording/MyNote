@@ -1,0 +1,60 @@
+mkdir -p data/git/gittest.git
+git init --bare data/git/gittest.git
+cd data/git/
+chown -R git:git gittest.git/
+
+mkdir -p data/git/eclipsegit.git
+git init --bare data/git/eclipsegit.git
+cd data/git/
+chown -R git:git eclipsegit.git/
+
+mkdir -p base.git
+git init --bare base.git
+chown -R git:git base.git/
+
+mkdir -p basedata.git
+git init --bare basedata.git
+chown -R git:git basedata.git/
+
+mkdir -p basedata-web.git
+git init --bare basedata-web.git
+chown -R git:git basedata-web.git/
+
+mkdir -p framwork.git
+git init --bare framwork.git
+chown -R git:git framwork.git/
+
+mkdir -p house.git
+git init --bare house.git
+chown -R git:git house.git/
+
+mkdir -p house-web.git
+git init --bare house-web.git
+chown -R git:git house-web.git/
+
+mkdir -p parent.git
+git init --bare parent.git
+chown -R git:git parent.git/
+
+mkdir -p rent.git
+git init --bare rent.git
+chown -R git:git rent.git/
+
+mkdir -p rent-web.git
+git init --bare rent-web.git
+chown -R git:git rent-web.git/
+
+mkdir -p view.git
+git init --bare view.git
+chown -R git:git view.git/
+
+git@176.129.1.40:/home/data/git/newHome/base.git
+git@176.129.1.40:/home/data/git/newHome/basedata.git
+git@176.129.1.40:/home/data/git/newHome/basedata-web.git
+git@176.129.1.40:/home/data/git/newHome/framwork.git
+git@176.129.1.40:/home/data/git/newHome/house.git
+git@176.129.1.40:/home/data/git/newHome/house-web.git
+git@176.129.1.40:/home/data/git/newHome/parent.git
+git@176.129.1.40:/home/data/git/newHome/rent.git
+git@176.129.1.40:/home/data/git/newHome/rent-web.git
+git@176.129.1.40:/home/data/git/newHome/view.git
