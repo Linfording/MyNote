@@ -1,0 +1,26 @@
+现象:
+	jsp中form表单注明了post提交，而使用common.js/formsubmit()提交表单的时候一直是get方法，且无参数
+原因:
+	页面中引入的_title.jsp里含有一个表单
+	common.js:
+	function formSubmit (url,sTarget){
+	    document.forms[0].target = sTarget//'_self'表示在当前页面进行展示
+	    document.forms[0].action = url;
+	    document.forms[0].submit();
+	    return true;
+	}
+	方法是获取dom下所有的form，提交第一个，而这时要提交的form在第二个，所以出现了以上状况
+解决:
+	function formSubmit (url,sTarget){
+	    document.forms['icform'].target = sTarget//'_self'表示在当前页面进行展示
+	    document.forms['icform'].action = url;
+	    document.forms['icform'].submit();
+	    return true;
+	}
+	指定了提交哪个form，这样报错解决了
+
+网上搜集到的可能出现的报错:
+	1.<a href=""> form中含有空href的a标签
+	2.input的name，id为sumbit时，js方法失效
+
+	

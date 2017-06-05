@@ -1,0 +1,25 @@
+现象:
+	1.配置文件
+		c3p0.driver=com.mysql.jdbc.Driver
+		c3p0.url=jdbc:mysql://localhost:3306/mybatis
+		c3p0.user=root
+		c3p0.password=root
+	2.sringcontext中导入了配置文件
+			<context:property-placeholder location="classpath:/jdbc.properties"/>
+	3.controller中注入了值
+	@controller
+	public class Controller{
+		@Valeu("${c3p0.driver}")
+		private String driver;
+
+		public void say(){
+			sysout(driver);
+		}
+	}
+
+	输出值为:
+		${c3p0.driver}
+原因:
+	controller在实例化的时候配置文件依然没有读取到，所以赋值成了表达式。
+解决:
+	将sringcontext中导入配置文件的的配置移入springmvc context中即可
