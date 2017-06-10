@@ -1,0 +1,23 @@
+1.pom.xml
+<dependency>  
+    <groupId>org.springframework.boot</groupId>  
+    <artifactId>spring-boot-starter-test</artifactId>  
+</dependency>  
+
+2、test.java
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = SpringbootApplication.class)
+public class TestService extends BaseTestService{  
+    @Autowired  
+    private PersonService personService;  
+    @Test  
+    public void testSys() {  
+        System.out.println(personService.getPersonDomain().toString());  
+    }  
+  
+}  
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = SpringbootApplication.class)内容是项目的启动类
+
+**注意:如果用的SpringBoot是1.4.0之前的话，所用的注解稍有不同。你需要把@SpringBootTest注解换成@SpringApplicationConfiguration和@WebAppConfiguration。
