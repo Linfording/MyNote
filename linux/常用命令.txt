@@ -1,0 +1,28 @@
+ifconfig #查看ip
+
+tar -xvf jdk-7u51-linux-x64.tar.gz	#解压压缩包
+
+vi /etc/profile	#配置环境变量
+
+source /etc/profile 使更改的配置立即生效
+
+service iptables stop //关闭防火墙
+
+看滚动tomcat日志
+    tail -f 100 catalina.out
+
+/sbin/iptables -I INPUT -p tcp --dport 8080 -j ACCEPT 	
+#I不指定位置就是插入到最前面	-A默认是插入到尾部的，可以-I来插入到指定位置
+iptables -I INPUT 3 -p tcp -m tcp --dport 8080 -j ACCEPT
+#INPUT是进入的链接，TCP协议的链接，连接的80端口 ACCEPT是允许，REJECT是拒绝
+iptables -I INPUT -p tcp --dport 3306 -j ACCEPT
+
+
+/etc/rc.d/init.d/iptables save		#修改生效
+/etc/init.d/iptables status			#查看配置
+
+
+rm -rf *				#强制删除目录下所有文件
+
+cp –r t1 t2			#复制t1目录为t2目录，形成第二个tomcat
+
