@@ -1,0 +1,221 @@
+git
+1.更新yum源
+	首先备份/etc/yum.repos.d/CentOS-Base.repo
+	mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+
+	进入yum源配置目录
+	cd /etc/yum.repos.d/
+
+	下载yum源，以下载163的yum为例
+	wget http://mirrors.163.com/.help/CentOS6-Base-163.repo
+
+	配置yum源缓存
+	yum makecache
+
+	更新yum源
+	yum -y update
+2.安装git
+	方法一:
+	Centos/RedHat
+	如果你使用的系统是 Centos/RedHat 安装命令为：
+	$ yum install curl-devel expat-devel gettext-devel openssl-devel zlib-devel
+
+	$ yum -y install git-core
+
+	$ git --version
+	git version 1.7.1
+
+	方法二:
+	1、最新git源码下载地址：
+
+	https://github.com/git/git/releases
+
+	https://www.kernel.org/pub/software/scm/git/
+
+	可以手动下载下来在上传到服务器上面
+
+	移除旧版本git
+
+	centos自带Git，7.x版本自带git 1.8.3.1（应该是，也可能不是），安装新版本之前需要使用yun remove git卸载（安装后卸载也可以）。
+	[root@Git ~]# git --version    ## 查看自带的版本
+	git version 1.8.3.1
+	[root@Git ~]# yum remove git   ## 移除原来的版本
+	3 安装所需软件包
+	[root@Git ~]# yum install curl-devel expat-devel gettext-devel openssl-devel zlib-devel 
+	[root@Git ~]# yum install gcc-c++ perl-ExtUtils-MakeMaker
+	4 下载&安装
+	[root@Git ~]# cd /home/software
+	[root@Git ~]# wget https://www.kernel.org/pub/software/scm/git/git-2.9.4.tar.gz
+	5 解压
+	[root@Git ~]# tar -xvf git-2.9.4.tar.gz
+	6 配置编译安装
+	[root@Git ~]# cd git-2.9.4
+	[root@Git ~]# make configure
+	[root@Git ~]# ./configure --prefix=/home/git ##配置目录
+	[root@Git ~]# make profix=/home/git
+	[root@Git ~]# make install
+	7 加入环境变量
+	[root@Git ~]# echo "export PATH=$PATH:/home/git/bin" >> /etc/profile
+	[root@Git ~]# source /etc/profile
+	8 检查版本
+	[root@Git git-2.7.3]# git --version 
+	git version 2.9.4
+
+3.Git 配置
+	Git 提供了一个叫做 git config 的工具，专门用来配置或读取相应的工作环境变量。
+	这些环境变量，决定了 Git 在各个环节的具体工作方式和行为。这些变量可以存放在以下三个不同的地方：
+	/etc/gitconfig 文件：系统中对所有用户都普遍适用的配置。若使用 git config 时用 --system 选项，读写的就是这个文件。
+	~/.gitconfig 文件：用户目录下的配置文件只适用于该用户。若使用 git config 时用 --global 选项，读写的就是这个文件。
+	当前项目的 Git 目录中的配置文件（也就是工作目录中的 .git/config 文件）：这里的配置仅仅针对当前项目有效。每一个级别的配置都会覆盖上层的相同配置，所以 .git/config 里的配置会覆盖 /etc/gitconfig 中的同名变量。
+	在 Windows 系统上，Git 会找寻用户主目录下的 .gitconfig 文件。主目录即 $HOME 变量指定的目录，一般都是 C:\Documents and Settings\$USER。
+	此外，Git 还会尝试找寻 /etc/gitconfig 文件，只不过看当初 Git 装在什么目录，就以此作为根目录来定位。
+	用户信息
+	配置个人的用户名称和电子邮件地址：
+	$ git config --global user.name "runoob"
+	$ git config --global user.email test@runoob.com
+	如果用了 --global 选项，那么更改的配置文件就是位于你用户主目录下的那个，以后你所有的项目都会默认使用这里配置的用户信息。
+	如果要在某个特定的项目中使用其他名字或者电邮，只要去掉 --global 选项重新配置即可，新的设定保存在当前项目的 .git/config 文件里。
+	文本编辑器
+	设置Git默认使用的文本编辑器,一般可能会是 Vi 或者 Vim。如果你有其他偏好，比如 Emacs 的话，可以重新设置：
+	$ git config --global core.editor emacs
+	差异分析工具
+	还有一个比较常用的是，在解决合并冲突时使用哪种差异分析工具。比如要改用 vimdiff 的话：
+	$ git config --global merge.tool vimdiff
+	查看配置信息
+	要检查已有的配置信息，可以使用 git config --list 命令：
+	$ git config --list
+	http.postbuffer=2M
+	user.name=runoob
+	user.email=test@runoob.com
+	有时候会看到重复的变量名，那就说明它们来自不同的配置文件（比如 /etc/gitconfig 和 ~/.gitconfig），不过最终 Git 实际采用的是最后一个。
+	这些配置我们也可以在 ~/.gitconfig 或 /etc/gitconfig 看到，如下所示：
+	vim ~/.gitconfig 显示内容如下所示：
+	[http]
+	    postBuffer = 2M
+	[user]
+	    name = runoob
+	    email = test@runoob.com
+	也可以直接查阅某个环境变量的设定，只要把特定的名字跟在后面即可，像这样：
+	$ git config user.name
+	runoob
+4.服务端搭建Git
+	1.服务器端创建 git 用户，用来管理 Git 服务，并为 git 用户设置密码
+	useradd git
+	passwd git
+	2.服务器端创建 Git 仓库
+	设置 /home/data/git/gittest.git 为 Git 仓库
+	然后把 Git 仓库的 owner 修改为 git
+	[root@localhost home]# mkdir -p data/git/gittest.git
+	[root@localhost home]# git init --bare data/git/gittest.git
+	Initialized empty Git repository in /home/data/git/gittest.git/
+	[root@localhost home]# cd data/git/
+	[root@localhost git]# chown -R git:git gittest.git/
+	 
+	3 客户端 clone 远程仓库
+	进入 Git Bash 命令行客户端，创建项目地址（设置在 d:/wamp64/www/gittest_gitbash）并进入:
+	dee@Lenovo-PC MINGW64 /d
+	$ cd wamp64/www
+	dee@Lenovo-PC MINGW64 /d/wamp64/www
+	$ mkdir gittest_gitbash
+	dee@Lenovo-PC MINGW64 /d/wamp64/www
+	$ cd gittest_gitbash
+	dee@Lenovo-PC MINGW64 /d/wamp64/www/gittest_gitbash
+	$
+	然后从 Linux Git 服务器上 clone 项目：
+	
+	$ git clone git@192.168.56.101:/home/data/git/gittest.git
+	3.1报错:
+		$ git clone ssh://git@176.129.1.40:/home/data/git/gittest.git
+		Cloning into 'gittest'...
+		git@176.129.1.40's password:
+		bash: git-upload-pack: command not found
+		fatal: Could not read from remote repository.
+
+		Please make sure you have the correct access rights
+		and the repository exists.
+
+	3.2原因
+		原来代码服务器【192.168.57.61】上的git安装路径是/usr/local/git，不是默认路径，根据提示，在git服务器192.168.57.61上， 建立链接文件：
+
+	3.3提示:
+	ssh git@176.129.1.40 echo \$PATH
+	/usr/local/bin:/bin:/usr/bin
+	在git-upload-pack 应该/usr/local/bin下
+
+	3.4 ln -s命令:
+		它的功能是为某一个文件在另外一个位置建立一个同不的链接，这个命令最常用的参数是-s,具体用法是：ln -s 源文件 目标文件
+	
+	3.5 建立链接文件：
+		ln -s /home/git/bin/git-upload-pack /usr/local/bin/git-upload-pack
+		ln -s /home/git/bin/git-receive-pack /usr/local/bin/git-receive-pack
+	4. 服务器端 Git 打开 RSA 认证
+	进入 /etc/ssh 目录，编辑 sshd_config，打开以下三个配置的注释：
+
+	RSAAuthentication yes
+	PubkeyAuthentication yes
+	AuthorizedKeysFile .ssh/authorized_keys
+	保存并重启 sshd 服务：
+
+	[root@localhost ssh]# /etc/rc.d/init.d/sshd restart
+	 
+
+	由 AuthorizedKeysFile 得知公钥的存放路径是 .ssh/authorized_keys，实际上是 $Home/.ssh/authorized_keys，由于管理 Git 服务的用户是 git，所以实际存放公钥的路径是 /home/git/.ssh/authorized_keys
+
+	在 /home/git/ 下创建目录 .ssh
+
+	[root@localhost git]# pwd
+	/home/git
+	[root@localhost git]# mkdir .ssh
+	[root@localhost git]# ls -a 
+	. .. .bash_logout .bash_profile .bashrc .gnome2 .mozilla .ssh
+	然后把 .ssh 文件夹的 owner 修改为 git
+
+	[root@localhost git]# chown -R git:git .ssh
+	[root@localhost git]# ll -a
+
+	drwx------. 5 git  git  4096 8月  28 20:04 .
+	drwxr-xr-x. 8 root root 4096 8月  28 19:32 ..
+	-rw-r--r--. 1 git  git    18 10月 16 2014 .bash_logout
+	-rw-r--r--. 1 git  git   176 10月 16 2014 .bash_profile
+	-rw-r--r--. 1 git  git   124 10月 16 2014 .bashrc
+	drwxr-xr-x. 2 git  git  4096 11月 12 2010 .gnome2
+	drwxr-xr-x. 4 git  git  4096 5月   8 12:22 .mozilla
+	drwxr-xr-x. 2 git  git  4096 8月  28 20:08 .ssh
+
+	5. 将客户端公钥导入服务器端 /home/git/.ssh/authorized_keys 文件
+	回到 Git Bash 下，导入文件：
+
+	$ ssh git@176.129.1.40'cat >> .ssh/authorized_keys' < ~/.ssh/id_rsa.pub
+	需要输入服务器端 git 用户的密码
+
+	回到服务器端，查看 .ssh 下是否存在 authorized_keys 文件：
+
+	[root@localhost git]# cd .ssh
+	[root@localhost .ssh]# ll
+	总用量 4
+	-rw-rw-r--. 1 git git 398 8月  28 20:08 authorized_keys
+	可以查看一下是否是客户端生成的公钥。
+
+	 
+
+	重要：
+
+	修改 .ssh 目录的权限为 700
+
+	修改 .ssh/authorized_keys 文件的权限为 600
+
+	[root@localhost git]# chmod 700 .ssh
+	[root@localhost git]# cd .ssh
+	[root@localhost .ssh]# chmod 600 authorized_keys 
+	 
+
+	6. 客户端再次 clone 远程仓库
+	$ git clone git@176.129.1.40:/home/data/git/gittest.git
+
+
+	http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000/001375233990231ac8cf32ef1b24887a5209f83e01cb94b000
+
+	http://www.cnblogs.com/dee0912/p/5815267.html
+
+	分支:
+		http://blog.csdn.net/autfish/article/details/52513465

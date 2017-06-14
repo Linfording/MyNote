@@ -1,0 +1,4 @@
+mkdir -p data/git/gittest.git
+git init --bare data/git/gittest.git
+cd data/git/
+chown -R git:git gittest.git/

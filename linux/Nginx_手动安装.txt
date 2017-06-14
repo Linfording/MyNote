@@ -1,0 +1,41 @@
+依赖环境
+1.OpenSSL开发库
+  SSL secure socket layer 安全的 套接字协议 SSL用的是公开秘钥的方式做加密 目的是确保两个系统之间通信的秘密性和可靠性
+  如果服务不仅要用到http协议 还要用到基于ssl的HTTP 就需要OpenSSL开发库
+2.zlib
+  用于数据压缩的函数库 用的是gzip格式http的数据包进行数据压缩 gzip on(nginx开启压缩模式
+)
+3.pcre
+正则表达式 nginx在做http模块的正则表达式翻译时 需要用到这个库
+
+4.GCC编译器
+这个编译器是用于编译C语言程序 因为nginx使用的c语言开发的
+补充如果nginx的版本是1.2.x之前需要手动安装GCC 如果是1.2版本后 自带GCC不需要安装
+
+cd zlib-1.2.7
+执行：./config
+然后执行：make & make install
+
+注意：nginx在linux上运行时 要以www用户组的身份来运行 如果不添加这个用户组nginx将启动不起来
+当前的nginx并没有www用户组 
+创建用户组
+/usr/sbin/groupadd -f www
+cat /etc/group
+然后还要在www用户组中添加www用户
+/usr/sbin/groupadd -g www www
+进入nginx安装目录：
+执行./configure --user==www --group==www --with-http_ssl_module --with-http_stub_status_module --with-http_gzip_static_module --with-mail --with-mail_ssl_module指定用户组
+make
+make install
+验证是否安装成功
+cd /usr/local
+cd sbin/  如果sbin中没有任何东西就证明ngnix安装失败
+./nginx -s reload
+
+
+
+linux中文
+vim /etc/sysconfig/i18n
+ LANG="zh_CN.UTF-8"
+        SUPPORTED="zh_CN:zh:en_US.UTF-8:en_US:en:zh_CN.GB18030"
+        SYSFONT="latarcyrheb-sun16"

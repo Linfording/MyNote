@@ -26,3 +26,5 @@ rm -rf *				#强制删除目录下所有文件
 
 cp –r t1 t2			#复制t1目录为t2目录，形成第二个tomcat
 
+chown -R git:git gittest.git/ 给gittest.git及所有子目录赋予git角色权限 chown权限命令
+

@@ -1,0 +1,55 @@
+需要连网安装
+
+Nginx-Yum方式安装
+  实现步骤：
+1.执行
+yum install autoconf automake zlib-devel openssl openssl-devel pcre pcre-devel gcc
+
+2.安装nginx 这里可以通过wget下载nginx
+wget http://nginx.org/download/nginx-1.7.8.tar.gz
+
+3.解压安装的nginx
+
+4.添加www用户组和www用户 因为nginx默认要以www用户组来运行
+执行：/usr/sbin/groupadd -f www 添加www用户组命令
+执行：/usr/sbin/useradd -g www www  添加www用户组下www用户的命令
+
+5进入nginx安装目录 检查nginx运行依赖的环境是否是完整的执行：
+
+./configure --user=www --group=www --prefix=/usr/local/nginx --with-http_stub_status_module
+ --with-http_ssl_module --with-http_gzip_static_module --with-mail --with-mail_ssl_module
+
+6.执行make & make install
+
+7.验证nginx是否安装成功
+进入/usr/local/nginx/sbin 目录 这个是nginx安装后启动命令默认的存放目录
+执行：./nginx -t 如果出现下图  证明nginx安装成功
+
+nginx:the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx:configuration file /usr/local/nginx/conf/nginx.conf test is successfull
+
+8.启动nginx
+进入/usr/local/nginx/sbin目录
+执行：./nginx 注意 这个启动指令 默认加载的是/usr/nginx/conf/nginx.conf来启动的
+但是建议以指令的配置文件的方式来启动：./nginx -c /usr/local/src/nginx1/nginx-1.7.8/conf/nginx.conf
+
+9.验证是否启动成功：
+ps -ef|grep nginx
+[root@car06-h02-176-129-1-124 sbin]# ps -ef|grep nginx
+root      6941     1  0 18:59 ?        00:00:00 nginx: master process ./nginx
+www       6942  6941  0 18:59 ?        00:00:00 nginx: worker process
+root      7060  6923  0 19:07 pts/1    00:00:00 grep nginx
+
+10.如果需要通过windows来访问的话 需要打开80端口 nginx的欢迎界面访问端口为80
+/sbin/iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+
+
+11.停掉nginx服务
+进入/usr/local/nginx/sbin目录
+执行：./nginx -s stop
+
+12.重部署nginx服务
+进入/usr/local/nginx/sbin
+执行:./nginx -s reload
+
+
