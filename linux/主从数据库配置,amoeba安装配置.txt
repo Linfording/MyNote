@@ -1,0 +1,269 @@
+1.主从复制配置
+	1.1安装主数据库服务器 master
+		1.1.1安装mysql，导入sql，参考ht最后一天
+		1.1.2关闭mysql服务复制出slave服务器虚拟机
+			service mysql stop
+		1.1.3配置/etc/my.cnf
+			在[mysqld]节点下加入两句话
+			server-id=1
+			log-bin=mysql-bin		#启用二进制日志；
+		1.1.4启动mysql服务
+			service mysql start
+			如果报错:
+				MySQL is running but PID file could not be found ?
+Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock'
+			解决:
+				ps -ef|grep mysql
+				kill -9 prot1 prot2
+
+			service mysql start
+		1.1.5查看是否配置好
+			show master status;
+		1.1.6开启3306端口
+			/sbin/iptables -I INPUT -p tcp --dport 3306 -j ACCEPT
+
+			/etc/rc.d/init.d/iptables save #保存配置
+			/etc/init.d/iptables status #查看
+		1.1.7开启远程访问权限
+			grant all on *.* to 'root'@'%' identified by 'root';
+
+	1.2配置从数据库服务器 slave
+		1.2.1配置/etc/my.cnf
+			在[mysqld]节点下加入两句话
+			server-id=2
+
+			配置/var/lib/mysql/auto.conf
+			UUID=更改uuid
+			
+		1.2.2启动mysql服务
+			service mysql start
+
+		1.2.3挂钩master
+			change master to master_host='ip',master_port='port',mast_user='root',master_password='root',master_log_file='',master_log_pos='';
+
+			master_log_file,master_log_pos--在master数据库查看:show master status
+
+		1.2.4启动从服务
+			start slave;
+
+		1.2.5查看是否配置好
+			show slave status\G;
+
+			以下两个属性是yes状态就是正常的
+			Slave_IO_Running:Connecting/Yes
+			Slave_SQL_Running:Yes
+
+			若没有两个Yes检查错误,重新执行挂钩操作
+		1.2.6开启3306端口
+		1.2.7开启远程访问权限
+
+	1.3在外面测试操作主库是否成功
+2.amoeba配置
+	2.1配置JDK，参考ht最后一天
+	2.2解压amoeba
+		# unzip  amoeba-mysql-3.0.4-BETA-distribution.zip
+		# mv amoeba-mysql-3.0.4-BETA /usr/local/amoeba
+
+	2.3配置文件介绍： 
+		(1.) dbServers.xml   想象Amoeba作为数据库代理层，它一定会和很多数据库保持通信，因此它必须知道由它代理的数据库如何连接，比如最基础的：主机IP、端口、Amoeba使用的用户名和密码等等。这些信息存储在$AMOEBA_HOME/conf/dbServers.xml中。 
+		(2.) rule.xml  Amoeba为了完成数据切分提供了完善的切分规则配置，为了了解如何分片数据、如何将数据库返回的数据整合，它必须知道切分规则。不切分规则相关的信息存储在$AMOEBA_HOME/conf/rule.xml中。 
+		(3.) functionMap.xml  当我们书写SQL来操作数据库的时候，常常会用到很多不同的数据库函数，比如：UNIX_TIMESTAMP()、SYSDATE()等等。这些函数如何被Amoeba解析呢？$AMOEBA_HOME/conf/functionMap.xml描述了函数名和函数处理的关系。 
+		(4.) ruleFunctionMap.xml  对$AMOEBA_HOME/conf/rule.xml进行配置时，会用到一些我们自己定义的函数，比如我们需要对用户ID求HASH值来切分数据，这些函数在$AMOEBA_HOME/conf/ruleFunctionMap.xml中定义。 
+		(5.) access_list.conf  Amoeba可以制定一些可访问以及拒绝访问的主机IP地址，这部分配置在$AMOEBA_HOME/conf/access_list.conf中。 
+		(6.) log4j.xml  Amoeba允许用户配置输出日志级别以及方式，配置方法使用log4j的文件格式，文件是$AMOEBA_HOME/conf/log4j.xml。 其中，我们主要用到dbServer.xml 和 amoeba.xml 。 
+		
+	2.3配置dbServer.xml;/conf/dbServer.xml
+		<?xml version="1.0" encoding="UTF-8"?>
+		<!DOCTYPE amoeba:dbServers SYSTEM "dbserver.dtd">
+		<amoeba:dbServers xmlns:amoeba="http://amoeba.meidusa.com/">	
+			<!--抽象server，用它代表物理机 -->
+			<dbServer name="abstractServer" abstractive="true">
+				<factoryConfig class="com.meidusa.amoeba.mysql.net.MysqlServerConnectionFactory">
+					<property name="manager">${defaultManager}</property>
+					<property name="sendBufferSize">64</property>
+					<property name="receiveBufferSize">128</property>
+						
+					<!-- mysql port -->
+					<!--代理连接数据库使用的端口号，所以数据库的端口都需要一致-->
+					<property name="port">3306</property>
+					
+					<!-- mysql schema -->
+					<!--自测数据库，程序用来测试连接是否成功，不能删-->
+					<property name="schema">test</property>
+					
+					<!-- mysql user -->
+					<!--所有数据库需要一致-->
+					<property name="user">root</property>
+					
+					<property name="password">root</property>
+				
+				</factoryConfig>
+
+				<poolConfig class="com.meidusa.amoeba.net.poolable.PoolableObjectPool">
+					<property name="maxActive">500</property>
+					<property name="maxIdle">500</property>
+					<property name="minIdle">10</property>
+					<property name="minEvictableIdleTimeMillis">600000</property>
+					<property name="timeBetweenEvictionRunsMillis">600000</property>
+					<property name="testOnBorrow">true</property>
+					<property name="testOnReturn">true</property>
+					<property name="testWhileIdle">true</property>
+				</poolConfig>
+			</dbServer>
+			<!--自定义server，继承了abstractServer的配置，自己加了扩充信息-->
+			<dbServer name="master" parent="abstractServer">
+			
+			<factoryConfig>
+					<!--ip-->
+					<property name="ipAddress">176.129.1.205</property>
+
+				</factoryConfig>
+			
+			</dbServer>
+			
+			
+			<dbServer name="slave01" parent="abstractServer">
+				<factoryConfig>
+					
+					<property name="ipAddress">176.129.1.210</property>
+
+				</factoryConfig>
+
+			</dbServer>
+			<!--multi池配置读写-->
+			<dbServer name="multiPool" virtual="true">
+				<poolConfig class="com.meidusa.amoeba.server.MultipleServerPool">
+					<!--load balancing startegy: 1=roundrobin 2=weightbased 3=ha-->
+					<property name="loadbalance">1</property>
+					<!--separated by commans,such as:slave01,slave02-->
+					<property name="poolNames">master,slave</property>
+				</poolConfig>
+			</dbServer>
+				
+		</amoeba:dbServers>
+
+	2.4配置amoeba.xml文件;/conf/amoeba.xml
+		<?xml version="1.0" encoding="gbk"?>
+
+		<!DOCTYPE amoeba:configuration SYSTEM "amoeba.dtd">
+		<amoeba:configuration xmlns:amoeba="http://amoeba.meidusa.com/">
+
+			<proxy>
+			
+				<!-- service class must implements com.meidusa.amoeba.service.Service -->
+				<service name="Amoeba for Mysql" class="com.meidusa.amoeba.mysql.server.MySQLService">
+					<!-- port -->
+					<property name="port">8066</property>
+					
+					<!-- bind ipAddress -->
+					<!-- 
+					绑定谁可以访问
+					可以绑定也可以不绑定,绑定了更安全,不绑定所有ip都可以访问
+					绑定amoeba服务器的地址
+					<property name="ipAddress">127.0.0.1</property>
+					 -->
+					<property name="ipAddress">176.129.1.212</property>
+					
+					<property name="connectionFactory">
+						<bean class="com.meidusa.amoeba.mysql.net.MysqlClientConnectionFactory">
+							<property name="sendBufferSize">128</property>
+							<property name="receiveBufferSize">64</property>
+						</bean>
+					</property>
+					
+					<property name="authenticateProvider">
+						<bean class="com.meidusa.amoeba.mysql.server.MysqlClientAuthenticator">
+							
+							<property name="user">root</property>
+							
+							<property name="password">root</property>
+							
+							<property name="filter">
+								<bean class="com.meidusa.toolkit.net.authenticate.server.IPAccessController">
+									<property name="ipFile">${amoeba.home}/conf/access_list.conf</property>
+								</bean>
+							</property>
+						</bean>
+					</property>
+					
+				</service>
+				
+				<runtime class="com.meidusa.amoeba.mysql.context.MysqlRuntimeContext">
+					
+					<!-- proxy server client process thread size -->
+					<property name="executeThreadSize">128</property>
+					
+					<!-- per connection cache prepared statement size  -->
+					<property name="statementCacheSize">500</property>
+					
+					<!-- query timeout( default: 60 second , TimeUnit:second) -->
+					<property name="queryTimeout">60</property>
+				</runtime>
+				
+			</proxy>
+			
+			<!-- 
+				Each ConnectionManager will start as thread
+				manager responsible for the Connection IO read , Death Detection
+			-->
+			<connectionManagerList>
+				<connectionManager name="defaultManager" class="com.meidusa.toolkit.net.MultiConnectionManagerWrapper">
+					<property name="subManagerClassName">com.meidusa.toolkit.net.AuthingableConnectionManager</property>
+				</connectionManager>
+			</connectionManagerList>
+			
+				<!-- default using file loader -->
+			<dbServerLoader class="com.meidusa.amoeba.context.DBServerConfigFileLoader">
+			<!--跟虚拟服务器挂钩-->
+				<property name="configFile">${amoeba.home}/conf/dbServers.xml</property>
+			</dbServerLoader>
+			
+			<queryRouter class="com.meidusa.amoeba.mysql.parser.MysqlQueryRouter">
+				<property name="ruleLoader">
+					<bean class="com.meidusa.amoeba.route.TableRuleFileLoader">
+						<property name="ruleFile">${amoeba.home}/conf/rule.xml</property>
+						<property name="functionFile">${amoeba.home}/conf/ruleFunctionMap.xml</property>
+					</bean>
+				</property>
+				<property name="sqlFunctionFile">${amoeba.home}/conf/functionMap.xml</property>
+				<!--最近最久未使用，意味着有缓存支持-->
+				<property name="LRUMapSize">1500</property>
+				<!--默认池，这里就是刚刚的多个配置，也可以用master-->
+				<property name="defaultPool">multiPool</property>
+				
+				
+				<property name="writePool">master</property>
+				<property name="readPool">multiPool</property>
+				
+				<property name="needParse">true</property>
+			</queryRouter>
+		</amoeba:configuration>
+	2.5开启8066端口
+	2.6启动amoeba
+		./bin/amoeba start 或 ./bin/amoeba start &
+		./bin/laucher start 或 ./bin/laucher start &
+
+
+		laucher 新版本用laucher
+		& 代表后台启动
+
+		一般第一次启动会失败:
+			The stack size specified is too small,Specify at least 228k
+			Error:could not create the Java Virtual Machine
+			Error:A fatal exception has occurred. Program will exit
+
+		原因:java虚拟机的堆栈太小了,默认最小是228k
+
+		解决方案:
+			默认配置Xss比较小128k，启动时提示太小，则修改/amoeba/bin/amoeba文件，修改为256k即可。
+			DEFAULT_OPTS="-server -Xms256m -Xmx256m -Xss256k"
+
+			低版本的amoeba有这个属性,高版本的没有,自己加
+
+		再次启动
+			
+	2.7从外部连接数据库测试:
+		数据库连接ip:amoebaIP
+		数据库连接port:8066
+
+	

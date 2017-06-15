@@ -1,6 +1,7 @@
 ifconfig #查看ip
 
 tar -xvf jdk-7u51-linux-x64.tar.gz	#解压压缩包
+unzip  amoeba-mysql-3.0.4-BETA-distribution.zip #解压zip压缩包
 
 vi /etc/profile	#配置环境变量
 
@@ -27,4 +28,5 @@ rm -rf *				#强制删除目录下所有文件
 cp –r t1 t2			#复制t1目录为t2目录，形成第二个tomcat
 
 chown -R git:git gittest.git/ 给gittest.git及所有子目录赋予git角色权限 chown权限命令
+
 
