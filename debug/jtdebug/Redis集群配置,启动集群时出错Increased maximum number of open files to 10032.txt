@@ -1,0 +1,12 @@
+常见错误:
+		Increased maximum number of open files to 10032 (it was originally set to 1024).
+4395:M 09 Nov 00:46:35.768 # Creating Server TCP listening socket 192.168.163.1:6379: bind: Cannot assign requested address
+
+		新装的linux默认只有1024，当负载较大时，会经常出现error: too many open files
+		ulimit -a：使用可以查看当前系统的所有限制值
+		vim /etc/security/limits.conf
+		在文件的末尾加上
+		* soft nofile 65535
+		* hard nofile 65535
+
+		执行su或者重新关闭连接用户再执行ulimit -a就可以查看修改后的结果。

@@ -1,0 +1,11 @@
+错误:
+	Unrecognized field "state" (class com.jt.manage.pojo.ItemCat), not marked as ignorable (8 known properties: "sortOrder", "status", "isParent", "parentId", "created", "updated", "name", "id"])
+ at [Source: N/A; line: -1, column: -1] (through reference chain: java.util.ArrayList[0]->com.jt.manage.po
+
+原因:
+	state是为了界面解析easyUI.Tree配的property,只有个get方法,没有属性且,json里没有state属性。
+
+解决:
+	pojo类上添加注解
+	@JsonIgnoreProperties(ignoreUnknown=true)
+	忽略找不到的属性
