@@ -1,0 +1,15 @@
+eclipse中自动生成的get,set:
+	public Boolean getIsParent() {
+		return isParent;
+	}
+	public void setIsParent(Boolean isParent) {
+		this.isParent = isParent;
+	}
+idea中自动生成的get,set:
+	public Boolean getParent() {
+        return isParent;
+    }
+
+    public void setParent(Boolean parent) {
+        isParent = parent;
+    }
