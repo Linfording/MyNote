@@ -1,0 +1,24 @@
+修改配置文件
+cd /etc/sysconfig/network-scripts	#进入网络配置目录
+dir ifcfg*								#找到网卡配置文件
+ifcfg-eno16777736  ifcfg-lo
+vi ifcfg-eno16777736
+配置文件内容
+TYPE=Ethernet
+BOOTPROTO=static									#改成static，针对NAT
+NAME=eno16777736
+UUID=4cc9c89b-cf9e-4847-b9ea-ac713baf4cc8
+DEVICE=eno16777736
+ONBOOT=yes					#开机启动此网卡
+IPADDR=192.168.163.30		#固定IP地址
+NETMASK=255.255.255.0		#子网掩码
+GATEWAY=192.168.163.2		#网关和NAT自动配置的相同，不同则无法登录
+DNS1=192.168.163.2			#和网关相同
+测试
+centos7	命令发生巨大变化
+ip addr						#查看IP地址 ip add
+service network restart	#重启网络 
+systemctl restart network.service	#重启网络centos7
+vi /etc/hosts				#127.0.0.1 dredis
+hostname dreids			#注意必须修改机器名hostname
+ping www.baidu.com			#如果出现baidu的ip地址则表示网络连通
