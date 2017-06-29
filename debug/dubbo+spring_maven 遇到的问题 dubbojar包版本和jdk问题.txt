@@ -1,0 +1,10 @@
+Java高编译低运行错误(ConcurrentHashMap.keySet)
+
+java.lang.NoSuchMethodError: java.util.concurrent.ConcurrentHashMap.keySet() 
+Ljava/util/concurrent/ConcurrentHashMap$KeySetView;
+
+dubbo-2.8.4.jar 必须要在jdk8上运行
+jdk7 ConcurrentHashMap 中的定义 transient Set<K> keySet;
+jdk8 ConcurrentHashMap 中的定义 transient KeySetView<K,V> keySet;
+KeySetView 是jdk8 中ConcurrentHashMap的一个内部类，jdk7中不存在。
+

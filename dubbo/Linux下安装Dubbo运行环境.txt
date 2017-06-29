@@ -1,0 +1,82 @@
+1.Linux下安装Dubbo运行环境
+	1)安装jdk
+	2)安装Zookeeper
+		拷贝zookeeper-3.4.8.tar.gz至/usr/local/src/zk
+		解压tar -xvf zookeeper-3.4.8.tar.gz 
+	3)配置zoo.cfg
+		1)cd /usr/local/src/zk/zookeeper-3.4.8/conf
+		2)cp zoo_sample.cfg zoo.cfg
+		
+		tickTime=2000										#tickTime心跳时间
+		clientPort=2181										#访问端口
+		dataDir=/usr/local/src/zk/zookeeper-3.4.8/data		#设置data路径
+		dataLogDir=/usr/local/src/zk/zookeeper-3.4.8/log	#设置增加日志路径	
+		server.1=192.168.233.25:2888:3888					#配置集群,最少3个节点可按机器名
+		server.2=192.168.233.26:2888:3888					#2888指follower连接leader端口
+		server.3=192.168.233.27:2888:3888					#3888指选举端口
+		
+	4)配置myid
+		mkdir data		#创建data路径
+		mkdir log		#创建log路径
+
+		cd data
+
+		vim myid
+			#对应zoo里的service.1,如果是service.2的就写2
+			1
+		wq
+	5)开启端口
+		iptables -I INPUT -p tcp --dport 2181 -j ACCEPT
+		iptables -I INPUT -p tcp --dport 2888 -j ACCEPT
+		iptables -I INPUT -p tcp --dport 3888 -j ACCEPT
+		/etc/rc.d/init.d/iptables save						
+		/etc/init.d/iptables status				
+	6)启动
+		cd	/usr/local/src/zk/zookeeper-3.4.8
+		sh bin/zkServer.sh start-foreground		#以日志方式启动
+		sh bin/zkServer.sh start				#普通启动
+		sh bin/zkServer.sh stop					#停止
+		sh bin/zkServer.sh status				#查看状态
+
+		192.168.233.27:
+			ZooKeeper JMX enabled by default
+			Using config: /usr/local/src/zk/zookeeper-3.4.8/bin/../conf/zoo.cfg
+			Mode: follower
+			
+		192.168.233.26:
+			ZooKeeper JMX enabled by default
+			Using config: /usr/local/src/zk/zookeeper-3.4.8/bin/../conf/zoo.cfg
+			Mode: leader
+
+		192.168.233.25:
+			ZooKeeper JMX enabled by default
+			Using config: /usr/local/src/zk/zookeeper-3.4.8/bin/../conf/zoo.cfg
+			Mode: follower
+	7)测试dubbox服务
+		dubbo-api
+		dubbo-consumer
+		dubbo-provider
+		dubbo-provider2
+
+	8)进入zookeeper client
+		cd /usr/local/src/zk/zookeeper-3.4.8/bin
+		./zkCli.sh -server 192.168.233.25:2181
+
+	9)zookeeper命令:
+		[zk: 192.168.233.25:2181(CONNECTED) 0] ls
+		[zk: 192.168.233.25:2181(CONNECTED) 1] ls /dubbo
+		[com.jt.dubbox.api.IProcessData]
+		[zk: 192.168.233.25:2181(CONNECTED) 2] ls /dubbo/com.jt.dubbox.api.IProcessData
+[consumers, routers, providers, configurators]
+		[zk: 192.168.233.25:2181(CONNECTED) 12] ls /dubbo/com.jt.dubbox.api.IProcessData/providers
+[]
+		启动providers
+		[zk: 192.168.233.25:2181(CONNECTED) 13] ls /dubbo/com.jt.dubbox.api.IProcessData/providers
+[dubbo%3A%2F%2F176.129.1.94%3A20880%2Fcom.jt.dubbox.api.IProcessData%3Fanyhost%3Dtrue%26application%3Dhello-world%26dubbo%3D2.8.4%26generic%3Dfalse%26interface%3Dcom.jt.dubbox.api.IProcessData%26methods%3Dhello%26pid%3D8856%26side%3Dprovider%26timestamp%3D1498739949574]
+
+		/dubbo/com.jt.dubbox.api.IProcessData/providersdubbo://176.129.1.94:20880/com.jt.dubbox.api.IProcessData?anyhost=true&application=hello-world&dubbo=2.8.4&generic=false&interface=com.jt.dubbox.api.IProcessData&methods=hello&pid=8856&side=provider&timestamp=1498739949574
+
+		启动consumers
+		[zk: 192.168.233.25:2181(CONNECTED) 14] ls /dubbo/com.jt.dubbox.api.IProcessData/consumers
+		[consumer%3A%2F%2F176.129.1.94%2Fcom.jt.dubbox.api.IProcessData%3Fapplication%3Dconsumer-of-helloworld-app%26category%3Dconsumers%26check%3Dfalse%26default.timeout%3D5000%26dubbo%3D2.8.4%26interface%3Dcom.jt.dubbox.api.IProcessData%26methods%3Dhello%26pid%3D6472%26side%3Dconsumer%26timestamp%3D1498740228372]
+		
