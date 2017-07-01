@@ -1,0 +1,250 @@
+1.docker安装
+	1)docker官方文档要求必须运行在Linux kernel 3.8以上，所以需要安装在Centos7或者Ubantu系统上。
+		yum install lrzsz			#安装上传下载组件
+		uname –a					#检查当前Linux内核版本
+	查询结果：
+	Linux tdocker 3.10.0-327.el7.x86_64 #1 SMP Thu Nov 19 22:10:57 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+
+	配置联网:
+		修改配置文件
+		cd /etc/sysconfig/network-scripts	#进入网络配置目录
+		dir ifcfg*								#找到网卡配置文件
+		ifcfg-eno16777736  ifcfg-lo
+		vi ifcfg-eno16777736
+		配置文件内容
+		TYPE=Ethernet
+		BOOTPROTO=static									#改成static，针对NAT
+		NAME=eno16777736
+		UUID=4cc9c89b-cf9e-4847-b9ea-ac713baf4cc8
+		DEVICE=eno16777736
+		ONBOOT=yes					#开机启动此网卡
+		IPADDR=192.168.163.30		#固定IP地址
+		NETMASK=255.255.255.0		#子网掩码
+		GATEWAY=192.168.163.2		#网关和NAT自动配置的相同，不同则无法登录
+		DNS1=192.168.163.2			#和网关相同
+		测试
+		centos7	命令发生巨大变化
+		ip addr						#查看IP地址 ip add
+		service network restart	#重启网络 
+		systemctl restart network.service	#重启网络centos7
+		vi /etc/hosts				#127.0.0.1 dredis
+		hostname dreids			#注意必须修改机器名hostname
+		ping www.baidu.com			#如果出现baidu的ip地址则表示网络连通
+		
+	2)安装工具包
+		yum install -y yum-utils 		#安装工具包，缺少这些依赖将无法完成
+
+	3)设置远程仓库
+		yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+	4)安装
+		yum install docker-ce
+
+	5)启动docker
+		systemctl start docker
+		service docker start        #启动docker
+		chkconfig docker on         #加入开机启动
+	6)查看docker版本
+		docker version
+	7)校验
+		docker run hello-world
+	8)docker查看命令
+		docker --help				#帮助
+		docker –v					#简单查看版本
+		docker version				#查看版本
+		docker info					#查看信息
+		
+2.docker启动Redis
+	cd docker
+
+	docker search  redis
+
+	docker pull redis			#默认拉取最后一个版本
+
+	docker pull redis:3.2.8		#指定拉取某个版本
+
+	docker images				#查看自己拉取的镜像
+	启动
+	docker run -d --name reds7000 -p 7000:6379 redis
+	docker run -d --name reds7001 -p 7000:6379 redis
+	docker run -d --name reds7002 -p 7000:6379 redis
+	-d:则containter将会在运行在后台模式
+	--name:实例名称
+	-p:对外程序访问端口:宿主机映射的redis端口6379(此例就是对外访问端口700,docker内端口6379)
+
+	docker ps  					#查看本地运行的容器
+
+	systemctl stop firewalld 	#停掉防火墙
+
+	#停止docker docker stop containerID/name
+	docker stop 10176645e747
+
+	docker ps -a				#查看已停止实例
+
+	docker rm -f 10176645e747	#删除docker实例 -f强制删除
+
+	docker rmi 10176645e747		#删除镜像
+
+	外部链接测试一下:
+		@Test
+		public void redis(){
+			//创建连接
+			Jedis jedis=new Jedis("176.129.1.16",7000);
+			jedis.set("name", "tony");//调用redis set命令
+			jedis.close();
+		}
+
+		@Test//分片
+		public void shard(){
+			List<JedisShardInfo> listInfo=new ArrayList<JedisShardInfo>();
+			listInfo.add(new JedisShardInfo("176.129.1.16", 7000));
+			listInfo.add(new JedisShardInfo("176.129.1.16", 7001));
+	//		listInfo.add(new JedisShardInfo("176.129.1.16", 7002));
+			ShardedJedis jedis=new ShardedJedis(listInfo);
+			for (int i = 0; i < 100; i++) {
+				jedis.set("name"+i, "tony"+i);
+			}
+			jedis.close();
+		}
+
+2.docker基础镜像
+	1)业务:拉取镜像
+		index.alauda.cn/tutum/centos:6.5
+	2)拉取镜像两种方式:
+		1)docker命令:
+			docker pull index.alauda.cn/tutum/centos:6.5
+		2)dockerfile命令:
+			FROM index.alauda.cn/tutum/centos:6.5
+	3)配置Dockerfile文件
+		cd docker
+		vim Dockfile
+		i:FROM index.alauda.cn/tutum/centos:6.5
+		wq
+
+	4)创建镜像build
+		docker build -t jt-centos6.5:0.0.1 .	#-t取个仓库名字, .指定到哪个目录
+		docker build -t jt-centos6.5:0.0.2 .
+	5)查看镜像images
+		docker images
+
+	6)删除镜像
+		docker rmi jt-centos6.5:0.0.2
+
+	7)导出镜像save
+		docker save -o jt-centos6.5.tar jt-centos6.5:0.01	#按镜像名导出
+
+		docker save 9610cfcf68e8d > jt-centos6.5.tar	#按镜像id导出但导入时没名称
+
+	8)导入镜像load
+		docker load -i jt-centos6.5.tar
+		
+3.dockerfile安装jdk
+	1)拷贝jdk
+		jdk.tar拷贝到和dockerfile文件同级下
+	2)配置dockerfile
+		vim Dockerfile
+		i:
+			FROM jt-centos6.5:0.0.1
+			#install jdk1.7  指定到/usr/local/src目录下虚拟机可以乱丢,docker的基础镜像不可以,
+			ADD jdk-7u51-linux-x64.tar.gz /usr/local/src
+			ENV JAVA_HOME=/usr/local/src/jdk1.7.0_51
+			ENV PATH=$JAVA_HOME/bin:$PATH
+			ENV CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+		wq
+	3)创建镜像build
+		docker build -t jt-jdk:0.0.1 .
+		
+	4)运行镜像run
+		docker run -d jt-jdk:0.0.1
+
+	5)进入docker容器，检查jdk是否安装成功
+		docker exec -i -t 8fd3e bash #-i -t 交互式进入容器 8fd3e:实例的id
+		#已进入容器
+		ls
+		java -version
+
+	6)退出容器,但不关闭容器
+		exit
+
+	7)关闭容器
+		docker stop 8fd3e
+3.dockerfile安装tomcat
+	1)拷贝tomcat
+		tomcat.tar拷贝到和dockerfile文件同级下
+	2)配置dockerfile
+		cp Dockerfile Dockerfile-jdk
+		vim Dockerfile
+		i:
+			FROM  jt-centos6.5:0.0.1
+
+			#install jdk1.7  
+			ADD jdk-7u51-linux-x64.tar.gz /usr/local/src
+			ENV JAVA_HOME=/usr/local/src/jdk1.7.0_51
+			ENV PATH=$JAVA_HOME/bin:$PATH
+			ENV CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+
+			#install tomcat7
+			ADD apache-tomcat-7.0.55.tar.gz /usr/local/src
+			ENV CATALINA_HOME /usr/local/src/apache-tomcat-7.0.55
+			ENV PATH=$PATH:$CATALINA_HOME/bin
+
+			EXPOSE 8080		#对外访问的端口
+			#执行命令,一个Dockfile只能有一个CMD
+			CMD["/usr/local/src/apache-tomcat-7.0.55/bin/catalina.sh","run"]
+		wq	
+	3)创建镜像build
+		docker build -t jt-tomcat:0.0.1 .
+		
+	4)运行镜像
+		docker run -d -p 8080:8080 --name jt-tomcat jt-tomcat:0.0.1
+
+	5)停止防火墙
+		systemctl stop firewalld 
+		
+	6)外部访问ip:8080测试
+		
+
+	7)运行多实例
+		docker run -d -p 8090:8080 --name jt-tomcat2 jt-tomcat:0.0.1
+
+4.部署war包
+	1)上传war
+		上传war,修改好jdbc.properties
+	2)配置dockerfile
+		cp Dockerfile Dockerfile-jdk
+		vim Dockerfile
+		i:
+			FROM  jt-centos6.5:0.0.1
+
+			#install jdk1.7  
+			ADD jdk-7u51-linux-x64.tar.gz /usr/local/src
+			ENV JAVA_HOME=/usr/local/src/jdk1.7.0_51
+			ENV PATH=$JAVA_HOME/bin:$PATH
+			ENV CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+
+			#install tomcat7
+			ADD apache-tomcat-7.0.55.tar.gz /usr/local/src
+			ENV CATALINA_HOME /usr/local/src/apache-tomcat-7.0.55
+			ENV PATH=$PATH:$CATALINA_HOME/bin
+			RUN rm -rf $CATALINA_HOME/webapps/*
+
+			#deploy the war
+			COPY xxx.war $CATALINA_HOME/webapps/ROOT.war
+			#解压war
+			WORKDIR $CATALINA_HOME/webapps/ROOT
+			RUN jar xvf ROOT.war
+			RUM rm -rf ROOT.war
+
+			EXPOSE 8080		#对外访问的端口
+			#执行命令,一个Dockfile只能有一个CMD
+			CMD["/usr/local/src/apache-tomcat-7.0.55/bin/catalina.sh","run"]
+		wq
+
+	3)制作镜像build
+		docker build -t xxx-war:0.0.1 .
+		docker images
+
+	4)运行镜像实例run
+		docker run -d -p 8001:8080 --name xxx xxx-war:0.0.1
+		
+	5)登录测试

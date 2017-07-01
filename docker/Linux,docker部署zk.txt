@@ -1,0 +1,128 @@
+Linux,docker部署zk
+	1)安装docker
+		参照day09
+	2)安装docker-compose
+		上传文件docker-compose-Linux-x86_64到/usr/local/bin目录下
+		mv docker-compose-Linux-x86_64 docker-compose	#修改名称
+		chmod +x /usr/local/bin/docker-compose			#设置文件访问权限
+		docker-compose -version							#查看版本
+		docker-compose up -d							#后台模式被启动
+
+		报错:
+		ERROR: 
+        Can't find a suitable configuration file in this directory or any
+        parent. Are you in the right directory?
+
+        Supported filenames: docker-compose.yml, docker-compose.yaml
+
+        没有docker-compose.yml,进行配置
+    3)编辑docker-compose.yml
+   		 配置zk的yml文件，默认找docker-compose.yml，分为两个版本1和2。 image:zookeeper为基础镜像，如果没有下载会自动下载。也可以单独的拉取。docker pull zookeeper。
+		====================================================
+		version: '2'
+		services:
+		    dzk1:
+		        image: zookeeper
+		        restart: always
+		        container_name: dzk1
+		        ports:
+		            - "2181:2181"
+		        environment:
+		            ZOO_MY_ID: 1
+		            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+		    dzk2:
+		        image: zookeeper
+		        restart: always
+		        container_name: dzk2
+		        ports:
+		            - "2182:2181"
+		        environment:
+		            ZOO_MY_ID: 2
+		            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+		    dzk3:
+		        image: zookeeper
+		        restart: always
+		        container_name: dzk3
+		        ports:
+		            - "2183:2181"
+		        environment:
+		            ZOO_MY_ID: 3
+		            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+		====================================================
+	4)启动docker
+		systemctl start docker
+		service docker start        #启动docker
+		chkconfig docker on         #加入开机启动
+	5)拉取zookeeper
+		docker pull zookeeper
+
+		拉取完成提示:
+		Digest: sha256:6308fff92245ff7232e90046976d2c17ffb363ae88c0d6208866ae0ab5a4b886
+		Status: Downloaded newer image for zookeeper:latest
+		
+	6)启动docker-compose.yml
+		#COMPOSE_PROJECT_NAME=myzk配置环境变量
+		COMPOSE_PROJECT_NAME=myzk docker-compose up -d
+		执行结果:
+		Creating network "myzk_default" with the default driver
+		Creating dzk3 ... 启动配置第三个节点
+		Creating dzk2 ... 启动配置第二个节点
+		Creating dzk1 ... 启动配置第一个节点
+		Creating dzk1 ... done
+		Creating dzk3 ... done
+		Creating dzk1 ... done
+
+		注意：成功后会自动匹配一个网络连接myzk_default
+	7)查看
+		COMPOSE_PROJECT_NAME=myzk docker-compose ps			#查看版本
+		COMPOSE_PROJECT_NAME=myzk docker-compose stop		#先停止
+		COMPOSE_PROJECT_NAME=myzk docker-compose rm			#后删除
+
+		[root@localhost bin]# COMPOSE_PROJECT_NAME=myzk docker-compose ps
+       Name                 Command                State                 Ports        
+		-------------------------------------------------------------------------------------
+		dzk1                  /docker-              Up                    0.0.0.0:2181->2181/ 
+		                      entrypoint.sh zkSe                          tcp, 2888/tcp,      
+		                      ...                                         3888/tcp            
+		dzk2                  /docker-              Up                    0.0.0.0:2182->2181/ 
+		                      entrypoint.sh zkSe                          tcp, 2888/tcp,      
+		                      ...                                         3888/tcp            
+		dzk3                  /docker-              Up                    0.0.0.0:2183->2181/ 
+		                      entrypoint.sh zkSe                          tcp, 2888/tcp,      
+		                      ...                                         3888/tcp   
+
+		[root@localhost bin]# COMPOSE_PROJECT_NAME=myzk docker-compose stop
+		Stopping dzk1 ... done
+		Stopping dzk3 ... done
+		Stopping dzk2 ... don  
+
+
+		[root@localhost bin]# COMPOSE_PROJECT_NAME=myzk docker-compose ps
+		Name              Command                State     Ports 
+		--------------------------------------------------------
+		dzk1   /docker-entrypoint.sh zkSe ...   Exit 143         
+		dzk2   /docker-entrypoint.sh zkSe ...   Exit 143         
+		dzk3   /docker-entrypoint.sh zkSe ...   Exit 143   
+
+
+		[root@localhost bin]# COMPOSE_PROJECT_NAME=myzk docker-compose rm
+		Going to remove dzk1, dzk3, dzk2
+		Are you sure? [yN] y
+		Removing dzk1 ... done
+		Removing dzk3 ... done
+		Removing dzk2 ... done
+
+	8)检查zk是否正常
+		上面就批处理实现了同时启动3个docker容器
+		docker ps											#查看容器
+		docker exec -it 9139ad4dcf70 bash					#进入容器
+		cd bin												#进入目录
+		ls													#看看内容
+		zkServer.sh status									#查看zk节点的状态
+		exit												#退出
+		cd bin
+
+		控制台连接测试
+				

@@ -1,0 +1,32 @@
+改造已有项目来实现dubbox
+	1)把项目中的要暴露服务提到接口的单独项目中
+	2)接口中药用到的对象就必须提到接口的项目中
+	3)远程传输,对类要求:必须序列化(SysResult)
+	4)rest协议:
+		a.看不到url调用,不许直接调用。写代码也看不到这个过程(测试的复杂度也增加了)
+		b.提供client api。javax.ws.rs WebService规范
+	
+测试dubbox服务
+	dubbo-api
+	dubbo-consumer
+	dubbo-provider
+	dubbo-provider2
+
+dubbox整合购物车系统
+
+创建公用接口类jt-dubbo
+	1)配置pom
+	2)从cart提取业务接口到dubbo
+		CartService-->DubboCartService
+	3)拷贝pojo,保留jpa
+
+提供者(jt-cart)
+	1)配置pom,依赖jt-dubbo
+	2)整合spring,dubbo(applicationContext-provider)
+	3)com.jt.dubbo.DubboCartServiceImpl 实现jt-dubbo api接口,替代controller
+	4)删除pojo,使用dubbo的pojo
+
+消费者(jt-web)
+	1)配置pom,依赖jt-dubbo
+	2)整合spring,dubbo(applicationContext-consumer)
+	3)controller或service注入DubboCartService进行调用
