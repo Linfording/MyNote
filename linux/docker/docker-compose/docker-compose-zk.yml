@@ -1,0 +1,31 @@
+version: '2'
+services:
+    dzk1:
+        image: zookeeper
+        restart: always
+        container_name: dzk1
+        ports:
+            - "2181:2181"
+        environment:
+            ZOO_MY_ID: 1
+            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+    dzk2:
+        image: zookeeper
+        restart: always
+        container_name: dzk2
+        ports:
+            - "2182:2181"
+        environment:
+            ZOO_MY_ID: 2
+            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+    dzk3:
+        image: zookeeper
+        restart: always
+        container_name: dzk3
+        ports:
+            - "2183:2181"
+        environment:
+            ZOO_MY_ID: 3
+            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888

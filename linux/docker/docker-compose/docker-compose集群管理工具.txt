@@ -1,0 +1,212 @@
+docker-compose集群管理工具
+1.安装
+	上传文件docker-compose-Linux-x86_64到/usr/local/bin目录下
+	mv docker-compose-Linux-x86_64 docker-compose	#修改名称
+	chmod +x /usr/local/bin/docker-compose			#设置文件访问权限
+	docker-compose -version							#查看版本
+	docker-compose up -d							#后台模式被启动
+
+	报错:
+	ERROR: 
+    Can't find a suitable configuration file in this directory or any
+    parent. Are you in the right directory?
+
+    Supported filenames: docker-compose.yml, docker-compose.yaml
+
+    没有docker-compose.yml,进行配置
+2.编辑docker-compose.yml
+2.1 zk集群的docker-compose案例:
+		配置zk的yml文件，默认找docker-compose.yml，分为两个版本1和2。 image:zookeeper为基础镜像，如果没有下载会自动下载。也可以单独的拉取。docker pull zookeeper。
+		====================================================
+		version: '2'
+		services:
+		    dzk1:
+		        image: zookeeper
+		        restart: always
+		        container_name: dzk1
+		        ports:
+		            - "2181:2181"
+		        environment:
+		            ZOO_MY_ID: 1
+		            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+		    dzk2:
+		        image: zookeeper
+		        restart: always
+		        container_name: dzk2
+		        ports:
+		            - "2182:2181"
+		        environment:
+		            ZOO_MY_ID: 2
+		            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+		    dzk3:
+		        image: zookeeper
+		        restart: always
+		        container_name: dzk3
+		        ports:
+		            - "2183:2181"
+		        environment:
+		            ZOO_MY_ID: 3
+		            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+		====================================================
+2.2 dockerfile转docker-compose.yml案例
+	dockerfile文件:
+	======================================================================
+	# mx_mysql
+	docker run -d -p 3306:3306 --name mx_mysql -v $PWD/conf/:/etc/mysql/conf.d -v $PWD/data/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.6
+
+	# mx_redis
+	docker run -d -p 6379:6379 -v $PWD/data/redis:/data --name mx_redis redis:3.2 redis-server --appendonly yes
+
+	# mx_nginx
+	docker run -p 80:80 --name mx_nginx -v $PWD/online/conf/mx_nginx.conf:/etc/nginx/conf.d/mx_nginx.conf --volumes-from mx_online -d nginx
+
+	# mx_online
+	docker run -d -p 8000:8000 -v /root/online:/online --name mx_online django uwsgi --http :8000 -w online.wsgi -p 3
+
+	# mx_celery
+	docker run -d -v /root/online:/online --name mx_celery --link mx_mysql:mysql --link mx_redis:redis django celery -A online worker -l info 
+	======================================================================
+
+	docker-compose.yml:
+	======================================================================
+		mx_mysql:
+		  restart: always
+		  image: mysql:5.6
+		  volumes:
+		    - /root/data/mysql:/var/lib/mysql
+		    - ./conf/:/etc/mysql/conf.d
+		  ports:
+		    - "3306:3306"
+		  environment:
+		    - MYSQL_DATABASE=online
+		    - MYSQL_ROOT_PASSWORD=123456
+		  
+		mx_redis:
+		  restart: always
+		  image: redis:3.2
+		  volumes:
+		    - /root/data/redis:/data
+		  ports:
+		    - "6379:6379"
+		  command: redis-server --appendonly yes
+
+		mx_nginx:
+		  restart: always
+		  image: nginx
+		  ports:
+		    - "80:80"
+		  volumes:
+		    - ./conf/mx_nginx.conf:/etc/nginx/conf.d/mx_nginx.conf
+		  volumes_from:
+		    - mx_online
+		  links:
+		    - mx_online:web
+
+		mx_online:
+		  restart: always
+		  build: .
+		  expose:
+		    - "8000:8000"
+		  volumes:
+		    - .:/online
+		  links:
+		    - mx_mysql:mysql
+		    - mx_redis:redis
+		  command: uwsgi -s :8000 -w online.wsgi -p 3
+
+		mx_celery:
+		  restart: always
+		  build: .
+		  volumes_from:
+		    - mx_online
+		  links:
+		    - mx_mysql:mysql
+		    - mx_redis:redis
+		  command: celery -A online worker -l info
+	======================================================================
+	
+3.语法:
+	image 使用的镜像
+	build 指定Dockerfile构建
+	command 启动执行命令
+	links 链接其他容器    
+	ports 端口映射
+	expose 暴露端口
+	volumes 挂载路径
+	volumes_from 从容器挂载
+	environment 环境变量
+
+4.docker-compose zks+rediss测试
+	============================================
+	version: '2'
+	services:
+	    redis1:
+	        image: redis
+	        restart: always
+	        container_name: redis1
+	        ports:
+	            - "7000:6379"
+	        volumes:
+	            - /root/data/redis:/data
+	        command:
+	            redis-server --appendonly yes
+
+	    redis2:
+	        image: redis
+	        restart: always
+	        container_name: redis2
+	        ports:
+	            - "7001:6379"
+	        volumes:
+	            - /root/data/redis:/data
+	        command:
+	            redis-server --appendonly yes
+
+	    redis3:
+	        image: redis
+	        restart: always
+	        container_name: redis3
+	        ports:
+	            - "7002:6379"
+	        volumes:
+	            - /root/data/redis:/data
+	        command:
+	            redis-server --appendonly yes
+
+	    dzk1:
+	        image: zookeeper
+	        restart: always
+	        container_name: dzk1
+	        ports:
+	            - "2181:2181"
+	        environment:
+	            ZOO_MY_ID: 1
+	            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+	    dzk2:
+	        image: zookeeper
+	        restart: always
+	        container_name: dzk2
+	        ports:
+	            - "2182:2181"
+	        environment:
+	            ZOO_MY_ID: 2
+	            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+	    dzk3:
+	        image: zookeeper
+	        restart: always
+	        container_name: dzk3
+	        ports:
+	            - "2183:2181"
+	        environment:
+	            ZOO_MY_ID: 3
+	            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+	============================================
+		COMPOSE_PROJECT_NAME=zks_redis docker-compose up -d			#运行
+		COMPOSE_PROJECT_NAME=zks_redis docker-compose ps			#查看版本
+		COMPOSE_PROJECT_NAME=zks_redis docker-compose stop		    #先停止
+		COMPOSE_PROJECT_NAME=zks_redis docker-compose rm			#后删除
+	

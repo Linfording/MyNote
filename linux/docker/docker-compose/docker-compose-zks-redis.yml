@@ -1,0 +1,64 @@
+version: '2'
+services:
+    redis1:
+        image: redis
+        restart: always
+        container_name: redis1
+        ports:
+            - "7000:6379"
+        volumes:
+            - /root/data/redis:/data
+        command:
+            redis-server --appendonly yes
+
+    redis2:
+        image: redis
+        restart: always
+        container_name: redis2
+        ports:
+            - "7001:6379"
+        volumes:
+            - /root/data/redis:/data
+        command:
+            redis-server --appendonly yes
+
+    redis3:
+        image: redis
+        restart: always
+        container_name: redis3
+        ports:
+            - "7002:6379"
+        volumes:
+            - /root/data/redis:/data
+        command:
+            redis-server --appendonly yes
+
+    dzk1:
+        image: zookeeper
+        restart: always
+        container_name: dzk1
+        ports:
+            - "2181:2181"
+        environment:
+            ZOO_MY_ID: 1
+            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+    dzk2:
+        image: zookeeper
+        restart: always
+        container_name: dzk2
+        ports:
+            - "2182:2181"
+        environment:
+            ZOO_MY_ID: 2
+            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
+
+    dzk3:
+        image: zookeeper
+        restart: always
+        container_name: dzk3
+        ports:
+            - "2183:2181"
+        environment:
+            ZOO_MY_ID: 3
+            ZOO_SERVERS: server.1=dzk1:2888:3888 server.2=dzk2:2888:3888 server.3=dzk3:2888:3888
