@@ -1,0 +1,173 @@
+1.RabbitMQ安装
+环境centos6.5
+1.1安装Erlang
+	添加yum支持
+		cd /usr/local/src/
+		mkdir rabbitmq
+		cd rabbitmq
+		在线安装（比较慢）
+		wget http://packages.erlang-solutions.com/erlang-solutions-1.0-1.noarch.rpm
+		rpm –Uvh erlang-solutions-1.0-1.noarch.rpm
+		rpm –import http://packages/erlang-solutions.com/rpm/erlang_solutions.asc
+		yum install erlang
+	注意上面的sudo命令将下载60个rpm，可能因为网络慢而其中某个下载失败，再次运行即可，成功的会自动跳过。
+
+	或者手动安装
+	下载：https://packages.erlang-solutions.com/erlang/esl-erlang-src/otp_src_17.0-rc2.tar.gz
+	上传esl-erlang_17.3-1~centos~6_amd64.rpm
+	执行 yum install esl-erlang_17.3-1~centos~6_amd64.rpm
+	上传esl-erlang-compat-R14B-1.el6.noarch.rpm
+	yum install esl-erlang-compat-R14B-1.el6.noarch.rpm
+
+1.2安装RabbitMQ
+	上传rabbitmq-server-3.6.1-1.noarch.rpm文件到/usr/local/src/rabbitmq/
+	安装：
+		rpm –ivh rabbitmq-server.3.6.1-1.noarch.rpm
+	
+1.3配置开启用户远程访问
+	默认只允许localhost用户访问。
+		cp /usr/share/doc/rabbitmq-server-3.6.1/rabbitmq.config.example /etc/rabbitmq/rabbitmq.config		#复制配置文件
+			(安装目录：/usr/share/doc/rabbitmq-server-3.6.1)
+		vi /etc/rabbitmq/rabbitmq.config #P64行
+			注意：文件有两处下面代码，vi/vim都有提示行数，必须找到64行的修改，否则会导致启动失败。
+			%% {loopback_users, []},
+			修改1：去掉前面的两个%%，
+			修改2：最后面的逗号，保存。
+			
+1.4开启后台管理插件
+	rabbitmq-plugins enable rabbitmq_management	#这条命令才会开启控制台,能通过控制台访问
+		
+1.5开启端口
+	/sbin/iptables –I INPUT –p tcp --dport 15672 –j ACCEPT  #控制台端口
+	/sbin/iptables –I INPUT –p tcp --dport 5672 –j ACCEPT	 #程序访问端口
+
+	/etc/rc.d/init.d/iptables save
+	/etc/init.d/iptables status
+
+1.6启动、停止服务
+	service rabbitmq-server start
+	service rabbitmq-server stop
+	service rabbitmq-server restart
+
+	[root@localhost rabbitmq]# service rabbitmq-server start
+	Starting rabbitmq-server: SUCCESS
+	rabbitmq-server.
+
+	错误日志目录：/var/log/rabbitmq/startup_err
+	设置开机启动
+	chkconfig rabbitmq-server on
+		
+	RabbitMQ配置vhost内部虚拟机,作用相似数据库,隔离不同的应用
+
+1.7访问管理平台
+	http://192.168.233.31:15672
+	username:guest
+	password:guest
+
+	Overview	概览
+	Connection	连接,程序要连接RabbitMQ要先创建连接
+	Channels	操作队列,操作交换机,必须通过它,它要开启一个通道才可以访问,不能直接连接就进去,编程上就是一个调用。
+	Exchange	交换机
+		Name						Type		Features	
+		(AMQP default)				direct			D		
+		amq.direct					direct			D		
+		amq.fanout					fanout			D		
+		amq.headers					headers			D		
+		amq.match					headers			D		
+		amq.rabbitmq.log			topic			D I		
+		amq.rabbitmq.trace			topic			D I		
+		amq.topic					topic			D	
+
+		默认创建了一堆交换机
+		Type:
+			direct	路由模式
+			fanout	发布订阅
+			topic	主题模式	
+		Features
+			D:持久化消息,防止消息丢失
+	Queue	队列
+	Admin	管理员
+
+1.8配置vhost虚拟机,用户
+	1.创建vhost虚拟机
+		控制台--admin--Virtual Host--Add a new virtual host
+			/jt
+			Add virtual host
+	2.创建用户
+		控制台--admin--User--Add a user
+			username jtadmin
+			passowrd 123456
+			Tags:
+			Admin | Monitoring | Policymaker | Management | None
+			这里使用的admin,同样可以根据你的业务需求分配不同的权限,直接点击admin即可
+			Add User
+	3.绑定虚拟机和用户
+		点击虚拟机或者用户都可以,选择即可
+	
+至此配置结束,开始程序访问
+2.程序访问测试:
+	@Test
+	public void mq_send() throws IOException{
+		//1.连接到rabbitMQ
+		ConnectionFactory factory=new ConnectionFactory();
+
+		//2.连接到rabittMQ服务器
+		factory.setHost("192.168.233.31");
+		factory.setPort(5672);//15672控制台的,代码是5672
+		//虚拟机
+		factory.setVirtualHost("/jt");
+		factory.setUsername("jtadmin");
+		factory.setPassword("123456");
+
+		Connection cn=factory.newConnection();
+		
+
+		//3.创建一个通道Channel
+		Channel chan = cn.createChannel();
+
+		
+		//4.声明或绑定一个消息队列
+		String QUEUE_NAME="test-simple";
+		chan.queueDeclare(QUEUE_NAME,false,false,false,null);
+
+		//5.发送消息
+		String msg="hello simple";
+		chan.basicPublish("",QUEUE_NAME,null,msg.getBytes());
+
+		chan.close();
+		cn.close();
+		
+	}
+	@Test
+	public void mq_recrive() throws IOException, ShutdownSignalException, ConsumerCancelledException, InterruptedException{
+		//1.连接到rabbitMQ
+		ConnectionFactory factory=new ConnectionFactory();
+
+		//2.连接到rabittMQ服务器
+		factory.setHost("192.168.233.31");
+		factory.setPort(5672);//15672控制台的,代码是5672
+		//虚拟机
+		factory.setVirtualHost("/jt");
+		factory.setUsername("jtadmin");
+		factory.setPassword("123456");
+
+		Connection cn=factory.newConnection();
+		
+
+		//3.创建一个通道Channel
+		Channel chan= cn.createChannel();
+
+		//4.声明或绑定一个消息队列
+		String QUEUE_NAME="test-simple";
+		chan.queueDeclare(QUEUE_NAME,false,false,false,null);
+
+		//5.接收消息
+		QueueingConsumer consumer=new QueueingConsumer(chan);
+		chan.basicConsume(QUEUE_NAME,true,consumer);
+
+		while(true){
+			QueueingConsumer.Delivery delivery=consumer.nextDelivery();
+			String message=new String(delivery.getBody());
+			System.out.println(message);
+		}
+	}

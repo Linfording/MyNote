@@ -1,0 +1,154 @@
+1.安装redis
+	1.下载
+		mkdir –p /usr/local/src/redis
+		cd /usr/local/src/redis
+		wget http://download.redis.io/releases/redis-3.0.7.tar.gz
+	2.解压
+		tar xzf redis-3.0.7.tar.gz #tar xvf redis-3.0.7.tar.gz
+		cd redis-3.0.7
+		
+	3.编译:
+		make				#下载后编译，过程稍长
+		make install		#进行安装
+	4.启动
+		redis-server	#注册服务：
+	5.查看
+	ps -ef|grep redis
+	root      6068  2527  0 22:18 pts/1    00:00:00 redis-server *:6379
+	root      6097  6081  0 22:23 pts/2    00:00:00 grep redis
+	
+	redis -cli	#进入redis
+
+	ping #如果返回pong 证明成功redis启动起来了
+
+	6.关闭redis服务
+		redis -cli
+		shutdown
+2.配置多实例redis
+	1.拷贝redis.conf
+		cp redis.conf redis6379.conf
+	2.修改参数
+		vi redis6379.conf
+		修改redis.conf地方:
+		1)#bind 127.0.0.1 	限定访问ip
+
+		2)protected-mode no	#早期redis默认no,不需要密码;yes密码; 一般是在内网用，所以不需要设置密码
+		
+		3)port 6379
+
+		4)daemonize yes	#守护进程，默认no，生产环境用yes，测试环境用no
+
+		5)maxmemory 200mb	#生产环境下必须设置,默认是不设置的，不设置的话redis会吃掉所有内存。一般设置30%物理内存。
+
+	3.复制redis6379.conf
+		cp redis6379.conf redis6380.conf
+		cp redis6379.conf redis6381.conf
+		修改6380,6381的端口
+
+	4.启动实例
+		redis-server redis6379.conf &
+		redis-server redis6380.conf &
+		redis-server redis6381.conf &
+
+	5.redis -cli -hip -p 6380 进入指定ip指定端口的redis
+
+3.redis分片
+	1.开启端口
+	iptables -I INPUT -p tcp --dport 6379 -j ACCEPT
+	/etc/rc.d/init.d/iptables save		#修改生效
+	/etc/init.d/iptables status			#查看配置
+	
+	jedis实现
+	1.导包:
+		<jackson.version>2.4.2</jackson.version>
+		<httpclient.version>4.3.5</httpclient.version>
+		<jedis.version>2.6.0</jedis.version>
+	2.
+	@Test//分片
+	public void shard(){
+		List<JedisShardInfo> listInfo=new ArrayList<JedisShardInfo>();
+		listInfo.add(new JedisShardInfo("176.129.1.232", 6379));
+		listInfo.add(new JedisShardInfo("176.129.1.232", 6380));
+		listInfo.add(new JedisShardInfo("176.129.1.232", 6381));
+		ShardedJedis jedis=new ShardedJedis(listInfo);
+		jedis.set("name", "tony");
+		jedis.close();
+	}
+
+
+4.管道pipe
+	1.按格式生成文件
+		package redis;
+
+		import java.io.BufferedWriter;
+		import java.io.FileOutputStream;
+		import java.io.IOException;
+		import java.io.OutputStreamWriter;
+		import java.io.UnsupportedEncodingException;
+
+		import org.junit.Test;
+
+		public class TestRedisPipe {
+			/**
+			 * 格式化成输入字符串
+			 */
+			private String getString(String... args) {
+				StringBuilder sb = new StringBuilder();
+				sb.append("*").append(args.length).append("\r\n");
+				for (String arg : args) {
+					sb.append("$").append(arg.length()).append("\r\n");
+					sb.append(arg).append("\r\n");
+				}
+				return sb.toString();
+			}
+
+			@Test
+			public void initFile2() {
+				Long startTime = System.currentTimeMillis();
+				String file = "d:\\d.txt";
+				BufferedWriter w = null;
+				StringBuilder sb = new StringBuilder();
+				try {
+					w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "utf-8"));
+					for (int i = 100000000; i < 100100000; i++) {
+						// for (int i = 1; i <= 100; i++) {
+						if (i / 30000 == 0) {
+							w.flush();
+						}
+						sb.setLength(0);
+						sb.append(this.getString("set", "u" + i, "name" + i));
+						// sb.append(this.getString("hmset", "usr" + i, "userid", "usr"
+						// + i, "username", "usrname" + i));
+						w.append(sb.toString());
+					}
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
+					try {
+						w.flush();
+						w.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
+				}
+				long endTime = System.currentTimeMillis();
+				System.out.println("耗时: " + (endTime - startTime) / 1000 + " s。");
+			}
+		}
+	2.将生成的文件导入linux
+	
+	3.开启服务
+		redis-server
+		
+	4.使用管道导入文件数据
+		cat d.txt |redis-cli --pipe
+
+	5.常见错误
+	[root@localhost redis]# cat d.txt |redis-cli --pipe
+	ERR Protocol error: too big mbulk count string
+	Error writing to the server: Connection reset by peer
+	文件太大，和所分配的内存大小密切相关，内存太少则会导致文件太大导入失败。
+	
