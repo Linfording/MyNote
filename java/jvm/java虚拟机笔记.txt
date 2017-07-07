@@ -1,0 +1,64 @@
+Java虚拟机
+
+1.运行时数据区域
+  共享区域：
+    方法区(Method Area):
+      类信息,常量,静态变量,即时编译器编译后的代码
+      运行时常量池
+      OutOfMemoryError
+    堆(Heap):对象实例
+      OutOfMemoryError
+  线程隔离区域：
+    虚拟机栈(Java Virtual Machine Stack):
+      描述的是方法执行的内存模型:栈帧
+      存储内容:局部变量表,操作数栈,动态链接,方法出口
+      两种异常:
+        StackOverflowError
+        OutOfMemoryError
+    本地方法栈(Native Method Stack)：
+      同虚拟机栈,只不过它服务的是native方法
+      OutOfMemoryError
+    程序计数器(Program Counter Register):
+      当前线程执行的字节码的行号指示器
+
+2.对象创建
+	new,clone,反序列化,反射newInstance
+2.1流程:
+	1.遇到创建对象指令(比如new)--检查这个指令的参数是否能在常亮池中定位到一个类的符号引用
+	2.检查这个符号引用代表的类是否已经被加载、解析、初始化。如果没有先执行相应的加载过程
+	3.加载通过后，分配内存
+	  分配方式有:
+	    指针碰撞方式(Bump the Pointer)
+	    空闲列表方式(Free List)
+	  选择哪种方式由java Heap是否规整决定。Heap是否规整又由GC是否带有压缩整理功能决定。
+	    使用Serial、ParNew等带有Compact过程的收集器时，系统采用的分配算法是指针碰撞
+	    使用CMS这种基于Mark-Sweep算法的收集器时，通常采用空闲列表方式
+	4.内存分配完成后，初始化分配好的内存空间(不包括对象头)。
+	5.虚拟机对对象进行设置:
+	    对象是哪个类的实例
+	    如何才能找到雷的单元数据信息
+	    对象的Hash码
+	    对象的GC分代年龄等信息
+	  这些信息存放在对象头中
+
+2.2并发情况下对象创建时内存分配冲突问题
+	问题:
+	  对象创建在虚拟机是非常频繁的，并发情况下，内存的分配会出现线程安全问题
+	解决方案:
+	  1.对分配内存空间的动作进行同步处理--实际上虚拟机采用CAS配上失败重试的方式保证更新操作的原子性；
+	    CAS:
+	      CAS:Compare and Swap, 翻译成比较并交换。
+	      java.util.concurrent包中借助CAS实现了区别于synchronouse同步锁的一种乐观锁。
+	      CAS应用
+	      CAS有3个操作数，内存值V，旧的预期值A，要修改的新值B。当且仅当预期值A和内存值V相同时，将内存值V修改为B，否则什么都不做。
+	  2.把内存分配的动作按照线程划分在不同的空间之中进行,即每个线程在Heap中预先分配一小块内存,称为本地线程分配缓冲(Thread Local Allocation Buffer,TLAB)。哪个线程要分配内存，就在哪个线程的TLAB上分配，只有TLAB用完并分配新的TLAB时，才需要同步锁定。虚拟机是否使用TLAB，可以通过-XX：+/-UseTLAB参数来设定。
+
+2.3对象的内存布局
+	1.对象头(Header)
+		运行时数据:
+			HashCode、GC分代年龄、锁状态标志、线程持有的锁、偏向线程ID、偏向时间戳等
+		类型指针
+			
+	2.实例数据(Instance Data)
+	3.对齐填充(Padding)
+
