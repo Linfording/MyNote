@@ -1,0 +1,6 @@
+订单模块
+1.关联表:3张
+	order,order_item,order_shipping
+	
+2.业务流程:
+	

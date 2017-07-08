@@ -1,0 +1,14 @@
+权限管理:
+1.关联表:5张
+	主表3张:user,Role,Module
+	关联表2张:user_Role，Role_Module
+
+
+2.业务流程
+	1.admin根据业务需求设计角色,设计模块,设计角色需要的模块,新增数据到Role,Module,Role_Module
+	2.admin根据业务分配user的role,为user修改role,新增关联数据到user_role
+	3.通过shiro标签,依据数据库信息为各个模块入口添加标签。
+	4.用户根据自己账户登录,shiro标签会根据User的权限展示或隐藏模块入口。
+
+3.shiro认证流程
+	

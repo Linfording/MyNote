@@ -1,0 +1,10 @@
+RabbitMQ
+1.消息队列对比
+	1)ActivitMQ		业务	apache				0.6w/s
+	2)RabbitMQ		业务	爱立信 Erlang语言	1w2/s
+	3)ZeroMQ		快，大数据，storm流式数据处理,24w/s
+	4)kafka			大数据 50w/s
+
+	ActivitMQ,RabbitMQ针对业务系统,性能方面RabbitMQ优于AcvityMQ,1w2/s对0.6w/s
+
+2.RabbtiMQ

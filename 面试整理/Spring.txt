@@ -1,0 +1,72 @@
+Spring
+1.Spring框架的作用
+
+   Spring框架主要用于与其他技术(struts,hibernate等)进行整合,
+
+可将应用程序中的Bean组件实现低耦合关联.最终可以提高系统扩展
+
+和维护性.
+
+   将来我们利用Spring框架管理系统的各个组件(Action,Service,DAO)
+
+.采用Spring的IOC和AOP机制实现各组件的关联.从而实现了低耦合调用.增强了系统可维护性和扩展性.
+
+2.Spring框架容器的基本使用
+
+   Spring框架的核心是提供了一个容器,该容器可以对Bean组件进行管理,例如创建Bean对象,销毁一个Bean对象等操作.此外该容器还具有IOC和AOP高级特性,将Bean对象调用解耦.
+
+   *1)Spring容器配置
+
+      创建工程,在src下引入applicationContext.xml配置文件,并添加spring-ioc开发包.
+
+      在applicationContext.xml中声明定义Bean组件格式:
+
+      <bean id="标识符"  class="包名.类名"/>
+
+   *2)Spring容器如何实例化
+
+       BeanFactory-->ApplicationContext(推荐)
+
+       ApplicationContext ac = 
+
+             new ClassPathXmlApplicationContext("xml配置文件");
+
+       ac.getBean("标识符");//获取Bean组件对象
+
+   3)Spring容器如何管理Bean组件
+
+      *a)控制Bean组件对象的创建方式
+
+        在<bean>元素利用scope属性.Spring可以控制Bean对象创建方式. 默认情况下scope属性可以用singleton和prototype两种值.
+
+        singleton:采用单例方式创建(默认采用)
+
+        prototype:采用(原型)非单例方式创建
+
+   ---------------------------------------------------   
+
+      在以后Web环境中,scope还可以有几个扩展属性值.
+
+        request:将Bean对象与request对象绑定.
+
+        session:将Bean对象与session对象绑定.
+
+   ---------------------------------------------------
+
+      b)Bean组件对象的创建时机
+
+       singleton模式:当实例化Spring容器时,会创建所有的单例对象.
+
+                              可以在<bean>元素中使用lazy-init属性控制,将对 
+
+                              象创建时机延迟到第一次调用getBean方法.
+
+       prototype模式:在调用Spring容器的getBean方法时创建.
+
+     c)指定Bean组件对象创建后初始化和销毁处理方法
+
+        指定初始化方法:利用<bean>元素的init-method属性指定
+
+        指定销毁方法:利用<bean>元素的destroy-method属性指定.
+
+                              该属性仅对scope="singleton"有效.

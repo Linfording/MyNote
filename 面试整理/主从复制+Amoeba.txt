@@ -1,0 +1,55 @@
+MySQL主从复制
+1.原理
+	1.master将数据改变记录到二进制文件binary log中,也即是配置文件log-bin指定的文件。
+	2.slave将master的binary log events 拷贝到它的中继日志relay log中
+	3.slave重做中继日志中的事件，将改变反映它自己的数据
+	4.默认是1分钟同步一次
+
+2.时间差问题
+	数据同步时从数据库总是会存在一定的事件差。
+	解决之道:
+		PhxSQL分布式数据库服务。该服务目标在于解决MySQL在容灾和数据一致性方面的不足，并大幅简化了MySQL容灾切换的运作操作
+		PhxSQL具有服务高可用、数据强一致、高性能、运维简单、和SQL完全兼容的特点。
+		服务高可用:PhySQL集群内只要多数派节点存活就能正常提供服务;出于性能的考虑,集群会选举出一个master节点负责写入操作;当master失效,会自动重新选举新的Mster。
+		数据强一致:PhySQL采用多节点冗余部署，在多个节点之间采用paxos协议同步流水,保证了集群内各节点数据的强一致。
+
+3.主从配置的注意点:
+	1.master和slave的数据库版本一致。
+	2.master和slave的数据一致
+	3.master开启二进制日志,master和slave的server_id都必须唯一
+
+4.读写分离:
+	主从复制,解决了数据备份问题,但是如果不做任何操作slave仅仅用来保存数据,是的服务器资源的浪费,所以读写分离是主从复制之后重要的应用。
+
+	主从备份提高数据安全,得写分离提高性能
+
+	读写分离通常是加在Mysql Proxy对代码没有入侵性
+	
+	Mysql层读写分离的常见实现:
+		1)Mysql proxy+脚本语言
+		2)Amoeba
+		3)MyCat alibaba
+		4)Altas 360
+
+		2,3,4都基于Mysql Proxy代理数据库。
+
+5.Amoeba
+	Amoeba以Mysql为底层数据存储,并对应提供MySQL协议接口的proxy。它集中的响应应用的请求,依据用户事先设置的规则,将SQL请求发送到特定的数据库上执行。
+	基于此可以实现负载均衡,读写分离,高可用性等需求。
+	Amoeba相当于一个SQL请求的路由器,目的是为了负载均衡、读写分离、高可用性提供机制,而不是完全实现他们。用户需要结合使用MySQL的Replication等机制来实现副本同步功能。amoeba对底层数据库连接管理和路由实现也采用了可插拔的机制。
+
+6.Amoeba主要解决以下问题:
+	a.数据切分后复杂数据源整合
+	b.提供数据切分规则并降低数据切分规则给数据库带来的影响
+	c.降低数据库与客户端连接
+	d.读写分离路由
+
+7.Amoeba关键配置文件
+	dbServers.xml: Amoeba代理的数据库如何连接
+		amoeba连接数据库的ip(master/slave),port(master/slave),username,password,(master和slave的用户名和密码必须一致)
+	amoeba.xml: Amoeba代理的相关配置
+		登录读写分离的port,username,password,dbServers位置,缓存配置,读写池配置
+		
+	
+	
+	

@@ -1,0 +1,108 @@
+SpringFramework5.0新特性
+	从高层来看，Spring Framework 5.0 的功能可以分为：
+		最低要求Java 8
+		核心框架修正
+		核心容器更新
+		含 Kotlin 在内的函数式编程
+		响应式编程模型
+		测试改进
+		库支持
+		中止支持
+1.JDK 基线更新
+	最低要求Java 8
+2.核心框架修订:
+	核心的 Spring Framework 5.0 已经利用 Java 8 所引入的新特性进行了修订。比较关键的一些如下：
+	1.基于Java 8的反射增强,Spring Framework 5.0 中的方法参数可以更加高效的进行访问。
+	2.核心的Spring接口现在提供基于Java 8 的默认方法构建的选择性声明。
+	3.用 @Nullable 和 @NotNull 注解来显示表明可为空的参数和以及返回值。这样就够在编译的时候处理空值而不是在运行时抛出 NullPointerExceptions。
+
+	在日志记录方面， Spring Framework 5.0 带来了 Commons Logging 桥接模块的封装, 它被叫做 spring-jcl 而不是标准的 Commons Logging。当然，无需任何额外的桥接，新版本也会对 Log4j 2.x, SLF4J, JUL ( java.util.logging) 进行自动检测。
+	有了 Resourse 抽象所提供的 isFile 指示器以及 getFile 方法，防御式编程方法也得到了框架的推动。
+	
+3.核心容器更新
+	Spring Framework 5.0 现在支持候选组件索引作为类路径扫描的替代方案。该功能已经在类路径扫描器中添加，以简化添加候选组件标识的步骤。
+
+	应用程序构建任务可以定义当前项目自己的 META-INF/spring.components 文件。在编译时，源模型是自包含的，JPA 实体和 Spring 组件是已被标记的。
+
+	从索引读取实体而不是扫描类路径对于小于 200 个类的小型项目是没有明显差异。但对大型项目影响较大。加载组件索引开销更低。因此，随着类数的增加，索引读取的启动时间将保持不变。
+
+	加载组件索引的耗费是廉价的。因此当类的数量不断增长，加上构建索引的启动时间仍然可以维持一个常数, 不过对于组件扫描而言，启动时间则会有明显的增长。
+
+	这个对于我们处于大型 Spring 项目的开发者所意味着的，是应用程序的启动时间将被大大缩减。虽然 20 或者 30 秒钟看似没什么，但如果每天要这样登上好几百次，加起来就够你受的了。使用了组件索引的话，就能帮助你每天过的更加高效。
+
+	你可以在 Spring 的 Jira上了解更多关于组件索引的相关信息。
+
+	@Nullable 注解现在也可以被用来作为可选注入项的指示器。@Nullable 为对象使用方规定了一项义务，就是它们必须准备以为取值为 null 的值。在此次发布之前，实现这件事情的唯一方法就是通过 Android 的 Nullable, Checker Framework 的 Nullable, 以及 JSR 305 的 Nullable。
+
+	发行说明中的其他一些新功能和增强功能包括：
+
+	1.在 GenericApplicationContext 和 AnnotationConfigApplicationContext 中实现函数式编程风格。
+	2.对接口方法的事务、缓存和异步注释的一致性检测。
+	3.将 XML 配置命名空间简化为无版本化的模式。
+
+4.含 Kotlin 在内的函数式编程
+	Spring Framework 5.0 引入了对 JetBrains Kotlin 语言的支持。Kotlin 是一种支持函数式编程编程风格的面向对象语言。Kotlin 运行在 JVM 之上，但运行环境并不限于 JVM。
+
+	有了对 Kotlin 的支持，开发者可以进行深度的函数式 Spring 编程，特别是在函数式 Web 端点以及 Bean 注册这些方面。
+	
+5.响应式编程模型
+	此次 Spring 发行版本的一个激动人心的特性就是新的响应式堆栈 WEB 框架。这个堆栈完全的响应式且非阻塞，适合于事件循环风格的处理，可以进行少量线程的扩展。
+
+	Reactive Streams 是来自于 Netflix, Pivotal, Typesafe, Red Hat, Oracle, Twitter 以及 Spray.io 的工程师特地开发的一个 API。它为响应式编程实现的实现提供一个公共的 API，好实现 Hibernate 的 JPA。这里 JPA 就是这个 API, 而 Hibernate 就是实现。
+Reactive Streams API 是 Java 9 的官方版本的一部分。在 Java 8 中, 你会需要专门引入依赖来使用 Reactive Streams API。
+
+	Spring Framework 5.0 对于流式处理的支持依赖于 Project Reactor 来构建, 其专门实现了 Reactive Streams API。
+
+	Spring Framework 5.0 拥有一个新的 spring-webflux 模块，支持响应式 HTTP 和 WebSocket 客户端。Spring Framework 5.0 还提供了对于运行于服务器之上，包含了 REST, HTML, 以及 WebSocket 风格交互的响应式网页应用程序的支持。
+
+	在 spring-webflux 中包含了两种独立的服务端编程模型：
+
+	基于注解：使用到了@Controller 以及 Spring MVC 的其它一些注解；
+	使用 Java 8 lambda 表达式的函数式风格的路由和处理。
+
+	有了 Spring Webflux, 你现在可以创建出 WebClient, 它是响应式且非阻塞的，可以作为 RestTemplate 的一个替代方案。
+
+	这里有一个使用 Spring 5.0 的 REST 端点的 WebClient 实现：
+		WebClient webClient = WebClient.create();
+		Mono person = webClient.get()
+		.uri("http://localhost:8080/movie/42")
+		.accept(MediaType.APPLICATION_JSON)
+		.exchange()
+		.then(response -> response.bodyToMono(Movie.class));
+	尽管新的 WebFlux 模块给我么带来了激动人心的新能力，传统的 Spring MVC 在  Spring Framework 5.0 仍然得到了完整的支持。
+	
+6.测试改进
+	Spring Framework 5.0 完全支持 JUnit 5 Jupiter，所以可以使用 JUnit 5 来编写测试以及扩展。此外还提供了一个编程以及扩展模型，Jupiter 子项目提供了一个测试引擎来在 Spring 上运行基于 Jupiter 的测试。
+
+	另外，Spring Framework 5 还提供了在 Spring TestContext Framework 中进行并行测试的扩展。
+
+	针对响应式编程模型， spring-test 现在还引入了支持 Spring WebFlux 的 WebTestClient 集成测试的支持，类似于 MockMvc，并不需要一个运行着的服务端。使用一个模拟的请求或者响应， WebTestClient 就可以直接绑定到 WebFlux 服务端设施。
+
+	你可以在这里找到这个激动人心的 TestContext 框架所带来的增强功能的完整列表。
+	当然， Spring Framework 5.0 仍然支持我们的老朋友 JUnit! 在我写这篇文章的时候， JUnit 5 还只是发展到了 GA 版本。对于 JUnit4， Spring Framework 在未来还是要支持一段时间的。
+	
+7.库支持
+	Spring Framework 5.0目前支持以下升级库的版本 ：
+	Jackson 2.6+
+	EhCache 2.10+ / 3.0 GA
+	Hibernate 5.0+
+	JDBC 4.0+
+	XmlUnit 2.x+
+	OkHttp 3.x+
+	Netty 4.1+
+	
+8.中止支持
+	在 API 层面，Spring Framework 5.0 不再支持以下包：
+		beans.factory.access
+		jdbc.support.nativejdbc
+		spring-aspects 模块的 mock.staticmock
+		web.view.tiles2M.（最低要求 Tiles 3）
+		orm.hibernate3 和 orm.hibernate4. 目前 Hibernate 5 是支持的框架。
+	Spring Framework 5.0 同时也停止了对以下库的支持：
+		Portlet.
+		Velocity.
+		JasperReports.
+		XMLBeans.
+		JDO.
+		Guava.
+	如果你正在使用任何上面的包，建议你将 Spring Framework 版本维持在 4.3.x。
