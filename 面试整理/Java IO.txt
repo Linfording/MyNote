@@ -1,0 +1,84 @@
+Java IO
+1.字符流
+	Reader
+		BufferedReader
+		InputStreamReader
+			FileReader
+		StringReader
+		PipedReader
+		ByteArrayReader
+		FilterReader
+			PushbackReader
+	Writer
+		BufferedWriter
+		OutputStreamWriter
+			FileWriter
+		PrinterWriter
+		StringWriter
+		PipedWriter
+		CharArrayWriter
+		FilterWriter
+2.字节流
+	InputStream
+		FileInputStream
+		FilterInputStream
+			BufferedInputStream
+			DataInputStream
+			PushbakInputStream
+		ObjectInputStream
+		PipedInputStream
+		SequenceInputStream
+		StringInputStream
+		ByteArrayInputStream
+	OutputStream
+		FileOutputStream
+		FilterOutputStream
+			BufferedOutputStream
+			DataOutputStream
+			PrintStream
+		ObjectOutputStream
+		PipedOutputStream
+		ByteArrayOutputStream
+		
+		
+3.随即读写类RandomAccessFile
+	public void getPointer(String userName){
+     String record = JTextField_show.getText();//获得文本框中的权限信息
+        try {
+             RandomAccessFile raf = new RandomAccessFile("user.txt","rw");
+             FileReader fr =new FileReader("user.txt");
+             BufferedReader br = new BufferedReader(fr);
+             String node = null;
+             long pointer = 0;
+             while((node=br.readLine())!=null){
+                  String[] mess = node.split("=");
+                  if(mess[0].equals(userName)){//若是匹配用户名，则在该行写入
+                       StringBuffer buffer = new StringBuffer(node);
+                       raf.seek(pointer+buffer.lastIndexOf("=")+1);
+                       String new_message = new String(node.getBytes("iso-8859-1"),"gbk");
+                       raf.writeBytes(record); //record是要写入的权限信息
+                   }else{
+                        pointer+=(node.length()+2); //若不匹配，则换下一行，同时将指针长度加上当前行长度在加上2（回车和换行符）
+                        raf.seek(pointer);//定位位置
+                         }
+                  }
+         }catch (Exception ex) {
+              ex.printStackTrace();
+         }
+ 	}
+
+ 	public class Test1
+	{
+	    public static void main(String[] args)
+	    {
+	        long pos = 100;
+            String str = "";
+            RandomAccessFile randomAccessFile = new RandomAccessFile("data.txt", "rw");
+            randomAccessFile.seek(pos);//将文件流的位置移动到pos字节处
+            while( (str = randomAccessFile.readLine()) != null)
+            {
+                System.out.println(str);
+            }
+            randomAccessFile.close();
+	    }
+	}
