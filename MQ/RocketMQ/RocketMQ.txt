@@ -1,0 +1,339 @@
+RocketMQ
+    参考整理自:
+        http://www.jianshu.com/p/3afd610a8f7d?from=jiantop.com
+        http://www.jianshu.com/p/790d6bc4a1c1
+        http://www.jianshu.com/p/53324ea2df92
+1.概述:
+    RocketMQ是阿里开源的一款高性能、高吞吐量的消息中间件
+
+2.特点:
+    1.支持严格的消息顺序；
+    2.支持Topic与Queue两种模式；
+    3.亿级消息堆积能力；
+    4.RocketMQ原生就是支持分布式的，而ActiveMQ原生存在单点性。
+    5.同时支持Push与Pull消息拉取模式；
+        Push好理解，比如在消费者端设置Listener回调；而Pull，控制权在于应用，即应用需要主动的调用拉消息方法从Broker获取消息，这里面存在一个消费位置记录的问题（如果不记录，会导致消息重复消费）。
+    6.在Metaq1.x/2.x的版本中，分布式协调采用的是Zookeeper，而RocketMQ自己实现了一个NameServer，更加轻量级，性能更好！
+    7.消息失败重试机制、高效的订阅者水平扩展能力、强大的API、事务机制等等
+    8.ActiveMQ是支持选择是否持久化，RocketMQ是必然持久化的
+
+3.RocketMQ功能特点
+    1.消峰		挡数据洪峰保后台平稳
+    2.解耦		降低系统耦合性
+    3.严格顺序		消息有序按照FIFO原则
+    4.扩展性强		节点独立水平扩展强
+    5.持久化		消息落地重复消费
+    6.异步通信
+
+4.初步理解
+    Producer/Consumer Group
+        ActiveMQ中并没有Group这个概念，而在RocketMQ中理解Group的机制很重要。
+        通过Group机制，让RocketMQ天然的支持消息负载均衡！
+        比如某个Topic有9条消息，其中一个Consumer Group有3个实例（3个进程 OR 3台机器），那么每个实例将均摊3条消息！（注意RocketMQ只有一种模式，即发布订阅模式。）
+
+    install RocketMQ
+        RocketMQ的Broker集群部署模式还挺多的，比如单Master模式、多Master模式、多Master多Slave模式（异步复制）、多Master多Slave模式（同步双写）等。明确个概念，RocketMQ Slave不可以写，可以读，类似于MySQL的主从机制。
+
+        单Master模式：
+            一旦单个broker重启或宕机，一切都结束了！很显然，线上不可以使用。
+        多Master模式：
+            全是Master，没有Slave。当然，一个broker宕机了，应用是无影响的，缺点在于宕机的Master上未被消费的消息在Master没有恢复之前不可以订阅。
+        多Master多Slave模式（异步复制）：
+            多对Master-Slave，高可用！采用异步复制的方式，主备之间短暂延迟，MS级别。Master宕机，消费者可以从Slave上进行消费，不受影响，但是Master的宕机，会导致丢失掉极少量的消息。
+        多Master多Slave模式（同步双写）：
+            和上面的区别点在于采用的是同步方式，也就是在Master/Slave都写成功的前提下，向应用返回成功，可见不论是数据，还是服务都没有单点，都非常可靠！缺点在于同步的性能比异步稍低。
+
+    http://www.jianshu.com/p/3afd610a8f7d?from=jiantop.com
+
+    无论生产者、消费者都必须给出GroupName，而且具有唯一性！
+    生产到哪个Topic的哪个Tag下，消费者也是从Topic的哪个Tag进行消费，可见这个Tag有点类似于JMS Selector机制，即实现消息的过滤。
+    生产者、消费者需要设置NameServer地址。
+
+5.初步了解消息失败重试机制
+    消息失败，无非涉及到2端：从生产者端发往MQ的失败；消费者端从MQ消费消息的失败；
+
+    5.1生产者端的失败重试
+        DefaultMQProducer producer = new DefaultMQProducer("ProducerGroup");
+        producer.setNamesrvAddr("192.168.99.121:9876;192.168.99.122:9876");
+        
+        producer.setRetryTimesWhenSendFailed(3);//如果发送失败则重新发送，3次
+        
+        producer.start();
+
+        for(int i=0;i<100;i++){
+            try{
+                Messsage msg=new Message("TopicTest",//Topic
+                    "TagA",//Tag
+                    ("Hello RocketMQ" +i).getBytes("UTF-8")//body
+                );
+                SendResult sendResult=producer.send(msg,1000);//发送msg，1秒内如果没有发送成功,则为失败
+                System.out.println(sendResult);
+            }catch(Exception e){
+                e.printStackTrace();
+                Thread.sleep(1000);
+            }
+        }
+
+        生产者端的消息失败：比如网络抖动导致生产者发送消息到MQ失败。
+        上面代码示例的处理手段是：如果该条消息在1S内没有发送成功，那么重试3次。
+
+    5.2消费者端的失败重试
+        消费者端的失败，分为2种情况，一个是timeout，一个是exception
+        timeout：
+            比如由于网络原因导致消息压根就没有从MQ到消费者上，在RocketMQ内部会不断的尝试发送这条消息，直至发送成功为止！（比如集群中一个broker失败，就尝试另一个broker）
+        exception：
+            消息正常的到了消费者，结果消费者发生异常，处理失败了。这里涉及到一些问题，需要我们思考下，比如，消费者消费消息的状态有哪些定义？如果失败，MQ将采取什么策略进行重试？假设一次性批量PUSH了10条，其中某条数据消费异常，那么消息重试是10条呢，还是1条呢？而且在重试的过程中，需要保证不重复消费吗？
+
+        public enum ConsumeConcurrentlyStatus{
+            CONSUME_SUCCESS,
+            RECONSUME_LATER；
+
+            Privarte ConsumeConcurrentlyStatus(){}
+        }
+
+        消息消费的状态，有2种，一个是成功（CONSUME_SUCCESS），一个是失败&稍后重试（RECONSUME_LATER）
+
+        在启动broker的过程中，可以观察下日志，你会发现RECONSUME_LATER的策略。
+
+        如果消费失败，那么1S后再次消费，如果失败，那么5S后，再次消费，......直至2H后如果消费还失败，那么该条消息就会终止发送给消费者了！
+
+        RocketMQ为我们提供了这么多次数的失败重试，但是在实际中也许我们并不需要这么多重试，比如重试3次，还没有成功，我们希望把这条消息存储起来并采用另一种方式处理，而且希望RocketMQ不要在重试呢，因为重试解决不了问题了！这该如何做呢？
+
+        我们先来看一下一条消息MessageExt对象的输出：
+            MessageExt [queueId=0, storeSize=137, queueOffset=0, sysFlag=0, bornTimestamp=1492213846916, bornHost=/192.168.99.219:50478, storeTimestamp=1492213846981, storeHost=/192.168.99.121:10911, msgId=C0A8637900002A9F0000000000000000, commitLogOffset=0, bodyCRC=613185359, reconsumeTimes=0, preparedTransactionOffset=0, toString()=Message [topic=TopicTest2, flag=0, properties={TAGS=TagA, WAIT=true, MAX_OFFSET=3, MIN_OFFSET=0}, body=16]]
+            注意到reconsumeTimes属性，这个属性就代表消息重试的次数！来看一段代码：
+
+            consume.registerMessageListener(new MessageListenerConcurrently(){
+                public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,ConsumeConcurrentlyContext context){
+                    MessageExt messageExt = msgs.get(0);
+                    System.out.println(messageExt);
+
+                    try{
+                        if(new Random().nextInt(3)==2){
+                            throw new Execption();
+                        }
+                    }catch(Exception e){
+                        if(messageExt.getReconsumeTimes()==3){
+                            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+                        }
+                        return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+                    }
+                    return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+                }
+            });
+
+        注意了，对于消费消息而言，存在2种指定的状态（成功 OR 失败重试），如果一条消息在消费端处理没有返回这2个状态，那么相当于这条消息没有达到消费者，势必会再次发送给消费者！也即是消息的处理必须有返回值，否则就进行重发。
+
+
+6.天然的消息负载均衡及高效的水平扩展机制
+    ProduceGroup --- RocketMQ --- ConsumeGroup --C1,C2,C3
+    
+    对于RocketMQ而言，通过ConsumeGroup的机制，实现了天然的消息负载均衡！通俗点来说，RocketMQ中的消息通过ConsumeGroup实现了将消息分发到C1/C2/C3/......的机制，这意味着我们将非常方便的通过加机器来实现水平扩展！
+
+    我们考虑一下这种情况：比如C2发生了重启，一条消息发往C3进行消费，但是这条消息的处理需要0.1S，而此时C2刚好完成重启，那么C2是否可能会收到这条消息呢？答案是肯定的，也就是consume broker的重启，或者水平扩容，或者不遵守先订阅后生产消息，都可能导致消息的重复消费！关于去重的话题会在后续中予以介绍！
+
+
+7.集群消费 AND 广播消费
+    RocketMQ的消费方式有2种，在默认情况下，就是集群消费，也就是上面提及的消息的负载均衡消费。另一种消费模式，是广播消费。广播消费，类似于ActiveMQ中的发布订阅模式，消息会发给Consume Group中的每一个消费者进行消费。
+
+    消费模式
+        public enum MessageModel{
+            BROADCASTING,
+            CLUSTERING;
+            private MessasgeModel(){}
+        }
+    
+    设置消费者模式
+        consumer.setMessageModel(MessageModel.BROADCASTING);
+
+8.关于多Master多Slave的说明
+    由于在之前的博客中已经搭建了双Master，其实多Master多Slave大同小异，因此这里并不会一步步的演示搭建多Master多Slave，而是从思路上，分析下重点应该注意的配置项。
+
+    第一，这四台机器，对外是一个统一的整体，是一个rocketmq cluster，因此需要brokerClusterName保持统一
+
+    第二，123机器是121的从，124机器是122的从，如何在配置中体现？ 主和从的brokerName需要保持一致，另外brokerId标示了谁是主，谁是从（brokerId=0的就是主，大于0的就是从）
+
+    第三，注意namesrvAddr的地址是4台NameServer
+
+    第四，配置项中brokerRole需要指明 ASYNC_MASTER（异步复制Master） or SYNC_MASTER（同步双写Master） or SLAVE（从）
+
+    第五，和以前的多Master启动方式一致，先启动4台Namesrv，然后用指定配置文件的方式启动Master/Slave即可
+
+    第六，多Master多Slave的好处在于，即便集群中某个broker挂了，也可以继续消费，保证了实时性的高可用，但是并不是说某个master挂了，slave就可以升级master，开源版本的rocketmq是不可以的。也就是说，在这种情况下，slave只能提供读的功能，将失去消息负载的能力。
+
+9.Queue in Topic
+    对于RocketMQ而言，Topic只是一个逻辑上的概念，真正的消息存储其实是在Topic中的Queue中。想一想，为什么RocketMQ要这要设计呢？其实是为了消息的顺序消费，后文中将为大家介绍。
+
+10.初步认识RocketMQ的核心模块
+
+    rocketmq-broker：接受生产者发来的消息并存储（通过调用rocketmq-store），消费者从这里取得消息。
+
+    rocketmq-client：提供发送、接受消息的客户端API。
+
+    rocketmq-namesrv：NameServer，类似于Zookeeper，这里保存着消息的TopicName，队列等运行时的元信息。（有点NameNode的味道）
+
+    rocketmq-common：通用的一些类，方法，数据结构等
+
+    rocketmq-remoting：基于Netty4的client/server + fastjson序列化 + 自定义二进制协议
+
+    rocketmq-store：消息、索引存储等
+
+    rocketmq-filtersrv：消息过滤器Server，需要注意的是，要实现这种过滤，需要上传代码到MQ！【一般而言，我们利用Tag足以满足大部分的过滤需求，如果更灵活更复杂的过滤需求，可以考虑filtersrv组件】
+
+    rocketmq-tools：命令行工具
+
+11.Order Message
+    RocketMQ提供了3种模式的Producer：
+
+    NormalProducer（普通）、OrderProducer（顺序）、TransactionProducer（事务）
+
+    之前涉及的都是NormalProducer，调用传统的send方法，消息是无序的。接下来，我们来看看顺序消费。模拟这样一个场景，如果一个用户完成一个订单需要3条消息，比如订单的创建、订单的支付、订单的发货，很显然，同一个用户的订单消息必须要顺序消费，但是不同用户之间的订单可以并行消费。
+
+    生产者端代码示例：
+        DefaultMQProducer producer = new DefaultMQProducer("ProducerGroup");
+        producer.setNamesrvAddr("192.168.99.121:9876");
+        producer.start();
+
+        String[] tags=new String[]{"createTag","payTag","sendTag"};
+
+        for(int orderId=1;orderId<=10;orderId++){//订单消息
+            for(int type=0;type<3;type++){//每种订单分为 创建订单/支付订单/发货订单
+                Message msg=new Message(
+                    "OrderTopic",//topic
+                    tags[type % tags.length],
+                    orderId+":"+type,
+                    (orderId+":"+type).getBytes()
+                );
+
+                SendResult sendResult=producer.send(msg,new MessageQueueSelector(){
+                    @Override
+                    public MessageQueue select(List<MessageQueue> mqs,Message msg,Object arg){
+                        Integer id=(Integer) arg;
+                        int index= id% mqs.size();
+                        return mqs.get(index);
+                    }
+                },orderId)
+
+                System.out.println(sendResult);
+            }
+        }
+
+        producer.shutdown();
+
+        顺序消息模式
+
+        注意，一个Message除了Topic/Tag外，还有Key的概念。
+
+        面的send方法不同于以往，有一个MessageQueueSelector，将用于指定特定的消息发往特定的队列当中！
+
+    生产者端代码示例：
+         
+        consumer.registerMessageListener(new MessageListenerOrderly(){
+
+             public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,ConsumeOrderlyContext context){
+                try{
+                    //模拟业务处理消息时间
+                    Thread.sleep(new Random().nextInt(1000));
+
+                    System.out.println(new String(msgs.get(0).getBody(),"UTF-8"));
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }catch(UnsupportedEncodingException e){
+                    e.printStackTrace();
+                }
+
+                return ConsumeOrderlyStatus.SUCCESS;
+             }
+         });
+
+        consumer.start();
+
+        System.out.println("Consumer started.");
+
+        注意在以前普通消费消息时设置的回调是MessageListenerConcurrently，而顺序消费的回调设置是MessageListenerOrderly。
+
+        当我们启动2个Consumer进行消费时，可以观察到：
+
+        Consumer Started.
+        3:0
+        2:0
+        2:1
+        2:2
+        3:1
+        3:2
+        6:0
+        7:0
+        6:1
+        7:1
+        7:2
+        10:0
+        10:1
+        10:2
+
+        Consumer Started.
+        4:0
+        1:0
+        1:1
+        4:1
+        1:2
+        5:0
+        5:1
+        4:2
+        5:2
+        8:0
+        9:0
+        9:1
+        8:1
+        8:2
+        9:2
+
+        多个消费者消费的结果
+
+        可以观察得到，虽然从全局上来看，消息的消费不是有序的，但是每一个订单下的3条消息是顺序消费的！
+
+        其实，如果需要保证消息的顺序消费，那么很简单，首先需要做到一组需要有序消费的消息发往同一个broker的同一个队列上！其次消费者端采用有序Listener即可。
+
+        这里，RocketMQ底层是如何做到消息顺序消费的，看一看源码你就能大概了解到，至少来说，在多线程消费场景下，一个线程只去消费一个队列上的消息，那么自然就保证了消息消费的顺序性，同时也保证了多个线程之间的并发性。也就是说其实broker并不能完全保证消息的顺序消费，它仅仅能保证的消息的顺序发送而已！
+
+        关于多线程消费这块，RocketMQ早就替我们想好了，这样设置即可：
+            //线程消费数最小数量    默认10
+            consumer.setConsumeThreadMin(10);
+            //消费线程数最大数量    默认20
+            consumer.setConsumeThreadMax(20);
+
+12.Transaction Message
+    在说事务消息之前，我们先来说说分布式事务的那些事！
+
+    什么是分布式事务，我的理解是一半事务。怎么说，比如有2个异构系统，A异构系统要做T1，B异构系统要做T2，要么都成功，要么都失败。
+
+    要知道异构系统，很显然，不在一个数据库实例上，它们往往分布在不同物理节点上，本地事务已经失效。
+
+    1.2阶段提交
+
+        1.start:
+            Client --- Transaction Commit
+        2.prepare
+            Transaction Commit --- 异构系统A，异构系统B
+        3.返回yes/no
+            异构系统A --- Transaction Commit
+            异构系统B --- Transaction Commit
+        4.commit
+            Transaction Commit --- 异构系统A,异构系统B
+
+
+        2阶段提交协议，Two-Phase Commit，是处理分布式事务的一种常见手段。2PC，存在2个重要角色：事务协调器（TC），事务执行者。
+
+        2PC，可以看到节点之间的通信次数太多了，时间很长！时间变长了，从而导致，事务锁定的资源时间也变长了，造成资源等待时间变长！在高并发场景下，存在严重的性能问题！
+
+        下面，我们来看看MQ在高并发场景下，是如何解决分布式事务的。
+
+    2.高并发场景下的分布式事务
+        考虑生活中的场景：
+
+        我们去北京庆丰包子铺吃炒肝，先去营业员那里付款（Action1），拿到小票（Ticket），然后去取餐窗口排队拿炒肝（Action2）。思考2个问题：第一，为什么不在付款的同时，给顾客炒肝？如果这样的话，会增加处理时间，使得后面的顾客等待时间变长，相当于降低了接待顾客的能力（降低了系统的QPS）。第二，付了款，拿到的是Ticket，顾客为什么会接受？从心理上说，顾客相信Ticket会兑现炒肝。事实上也是如此，就算在最后炒肝没了，或者断电断水（系统出现异常），顾客依然可以通过Ticket进行退款操作，这样都不会有什么损失！（虽然这么说，但是实际上包子铺最大化了它的利益，如果炒肝真的没了，浪费了顾客的时间，不过顾客顶多发发牢骚，最后接受）
+
+        生活已经告诉我们处理分布式事务，保证数据最终一致性的思路！这个Ticket（凭证）其实就是消息！
+
+
+
+
