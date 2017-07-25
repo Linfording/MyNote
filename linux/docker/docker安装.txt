@@ -1,5 +1,7 @@
 1.docker安装
 	1)docker官方文档要求必须运行在Linux kernel 3.8以上，所以需要安装在Centos7或者Ubantu系统上。
+		root权限登陆:默认user：root	password：admin
+
 		yum install lrzsz			#安装上传下载组件
 		uname –a					#检查当前Linux内核版本
 	查询结果：
