@@ -1,0 +1,31 @@
+java代码内对url进行encode处理
+url = "xxxxx?param=" + URLEncoder.encode("xxx", "utf-8");
+
+然后服务端获取时
+String param = URLDecoder.decode(param, "utf-8");
+
+js里的encode
+encodeURI 和 encodeURIComponent
+encodeURI 和 encodeURIComponent都是ECMA-262标准中定义的函数,所有兼容这个标准的语言（如JavaScript, ActionScript）都会实现这两个函数。它们都是用来对URI （RFC-2396）字符串进行编码的全局函数，但是它们的处理方式和使用场景有所不同。为了解释它们的不同，我们首先需要理解RFC-2396中对于 URI中的字符分类：
+1>保留字符（reserved characters）：这类字符是URI中的保留关键字符，它们用于分割URI中的各个部分。这些字符是：";" | "/" | "?" | ":" | "@" | "&" | "=" | "+" | "$" | "," 
+2>Mark字符（mark characters）：这类字符在RFC-2396中特别定义，但是没有特别说明用途，可能是和别的RFC标准相关。 这些字符是："-" | "_" | "." | "!" | "~" | "*" | "'" | "(" | ")" 
+3>基本字符（alphanum characters）：这类字符是URI中的主体部分，它包括所有的大写字母、小写字母和数字。
+在介绍完上面三类字符串后，我们就非常容易来解释encodeURI和encodeURIComponent函数的不同之处了：
+encodeURI: 该函数对传入字符串中的所有非（基本字符、Mark字符和保留字符）进行转义编码（escaping）。所有的需要转义的字符都按照UTF-8编码转化成 为一个、两个或者三个字节的十六进制转义字符（％xx）。例如，字符空格" "转换成为"%20"。在这种编码模式下面，需要编码的ASCII字符用一个字节转义字符代替，在\u0080和\u007ff之间的字符用两个字节转义字符代替，其他16为Unicode字符用三个字节转义字符代替。
+encodeURIComponent: 该函数处理方式和encodeURI只有一个不同点，那就是对于保留字符同样做转义编码。这样url中的参数和值才不会被#等特殊字符截断。 比如：http://localhost:8080/xss/XssServlet?username=A&T Plastic，该url，后台的代码：
+?
+1
+String username = request.getParameter("username");
+获得的username值为A，而不是我们希望的 A&T Plastic。因为 username=A&T Plastic，其中含有了保留字符&，并且没有进行编码，所以username的值被其给截断了。所以正确的做法是，对其进行编码：encodeURIComponent("A&T Plastic") == A%26T%20Plastic，然后将上面的连接改为：
+http://localhost:8080/xss/XssServlet?username=A%26T%20Plastic，后台才能获得正确的值：username==A&T Plastic。
+因为username的值含有了uri的保留字符，所以需要进行编码。
+例如，字符":"被转义字符"%3A"代替 
+之 所以有上面两个不同的函数，是因为我们在写JS代码的时候对URI进行两种不同的编码处理需求。encodeURI可以用来对完整的URI字符串进行编码处理。而encodeURIComponent可以对URI中一个部分进行编码，从而让这一部分可以包含一些URI保留字符。这在我们日常编程中是十分有用的。比如下面的URI字符串： 
+http://www.mysite.com/send-to-friend.aspx?url=http://www.mysite.com/product.html 
+在 这个URI字符串中。send-to-friend.aspx页面会创建HTML格式的邮件内容，里面会包含一个链接，这个链接的地址就是上面URI字符 串中的url值。显然上面的url值是URI中的一个部分，里面包含了URI保留关键字符。我们必须调用encodeURIComponent对它进行编 码后使用，否则上面的URI字符串会被浏览器认为是一个无效的URI。
+正确的URI应该如下： 
+http://www.mysite.com/send-to-friend.aspx?url=http%3A%2F%2Fwww.mysite.com%2Fproduct.html
+最多使用的应为encodeURIComponent，它是将中文、韩文等特殊字符转换成utf-8格式的url编码，所以如果给后台传递参数需要使用encodeURIComponent时需要后台解码对utf-8支持（form表单中的编码方式和当前页面编码方式相同）
+     escape不编码字符有69个：*，+，-，.，/，@，_，0-9，a-z，A-Z
+     encodeURI不编码字符有82个：!，#，$，&，'，(，)，*，+，,，-，.，/，:，;，=，?，@，_，~，0-9，a-z，A-Z
+     encodeURIComponent不编码字符有71个：!， '，(，)，*，-，.，_，~，0-9，a-z，A-Z
