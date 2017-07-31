@@ -1,0 +1,23 @@
+1 mysql 从左到右.
+
+一个原则，排除越多的条件放到第一个
+
+例子：抄的。
+
+SELECT … WHERE p.languages_id = 1 AND m.languages_id = 1 AND c.languages_id = 1 AND t.languages_id = 1 AND p.products_id IN (472,474)
+
+这样查询需要20多秒，虽然在各个字段上都建立了索引。用分析Explain SQL一分析，发现在第一次分析过程中就返回了几万条数据：
+
+WHERE p.languages_id = 1 ，然后再依次根据条件，缩小范围。
+
+而我改变一下WHERE 字段的位置之后，速度就有了明显地提高：
+
+WHERE p.products_id IN (472,474) AND
+
+p.languages_id = 1 AND m.languages_id = 1 AND c.languages_id = 1 AND t.languages_id = 1
+
+这样，第一次的条件是p.products_id IN (472,474)，它返回的结果只有不到10条，接下来还要根据其它的条件来过滤，自然在速度上有了较大的提升。
+
+2 ORCAL
+
+从右到左
