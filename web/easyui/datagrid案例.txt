@@ -1,0 +1,162 @@
+function initProduct2() {
+    var columns = [
+        {field: "skuNo", title: "SKU编码", width: 150},
+        {field: "goodsType", formatter: formatProductGoodsType, title: "贸易类型", width: 250},
+        {field: "archivesName", title: "货品名称", width: 100},
+        {field: "barcodeCode", title: "条码", width: 100},
+        {field: "normName", title: "规格名称", width: 100},
+        {field: "unitName", title: "基本单位", width: 80},
+        {field: "buyer", title: "买手组", width: 100},
+        {field: "brandName", title: "品牌", width: 100},
+        {field: "stockReturn", title: "可退库存量", width: 100},
+        {
+            field: "returnNum",
+            title: "采购退货量",
+            width: 100,
+            editor: {type: 'numberbox', options: {precision: 4, required: true, max: 100000000, min: 0, precision: 0}}
+        },
+        {
+            field: "afterTaxPrice",
+            title: "税后价",
+            width: 100,
+            editor: {type: 'numberbox', options: {precision: 4, required: true, max: 100000000, min: 0}}
+        },
+        {field: "preTaxPrice", title: "税前价", width: 100, editor: {type: 'numberbox'}},
+        {field: "taxRate", title: "税率", width: 50},
+        {field: "remark",title: "备注",width: 100,editor: {type: 'text', options: {precision: 4, required: true}}},
+    ];
+    columns.unshift({
+        field: "id",
+        title: "",
+        checkbox: true,
+        width: 50,
+        format: function (value, rowData, rowIndex) {
+            return "<input type=checkbox name='supplierProducts[" + rowIndex + "].id' />"
+        }
+    });
+    $("#dg_productDetail").datagrid('clearSelections');
+    $("#dg-data-add").datagrid({
+        columns: [columns],
+        idField: 'skuNo',//记得取自己唯一的判断条件
+        width: '100%',
+        height: '100%',
+        nowrap: true,
+        singleSelect: false,
+        selectOnCheck: false,
+        checkOnSelect: true,
+        toolbar: '#productToolbar',
+        data: [],
+        onBeforeEdit: function (index, row) {
+            // productRowChange(index,row);
+            row.editing = true;
+        },
+        onAfterEdit: function (index, row) {
+
+            row.editing = false;
+        },
+        onBeginEdit: function (rowIndex, rowData) {
+            var editors = $('#dg-data-add').datagrid('getEditors', rowIndex);
+            var purchaseReturnEditor = editors[0];
+            var afterTaxPriceEditor = editors[1];
+            var preTaxPriceEditor = editors[2];
+            var remarkEditor = editors[3];
+            //target属性就用于返回最初触发事件的DOM元素
+            //税后价输入改变
+            afterTaxPriceEditor.target.numberbox({
+                onChange: function (newValue, oldValue) {
+                    preTaxPriceEditor.target.numberbox('setValue', newValue * (1 - rowData.taxRate));
+                    if (newValue != "undefined" && editProductList.length > 0) {
+                        editProductList[rowIndex].afterTaxPrice = newValue;
+                        editProductList[rowIndex].preTaxPrice = newValue * (1 - rowData.taxRate);
+                    }
+                    var sumTotalPrice = 0;
+                    for (var i = 0; i < editProductList.length; i++) {
+                        sumTotalPrice += editProductList[i].returnNum * editProductList[i].afterTaxPrice;
+                    }
+                    $("#add_totalPrice").textbox("setValue", sumTotalPrice);
+                }
+            });
+            //退货数量输入改变
+            purchaseReturnEditor.target.numberbox({
+                onChange: function (newValue, oldValue) {
+                    if (newValue != "undefined" && editProductList.length > 0) {
+                        editProductList[rowIndex].returnNum = newValue;
+                    }
+                    var sumTotalPrice = 0;
+                    for (var i = 0; i < editProductList.length; i++) {
+                        sumTotalPrice += editProductList[i].returnNum * editProductList[i].afterTaxPrice;
+                    }
+                    $("#add_totalPrice").textbox("setValue", sumTotalPrice);
+                }
+            });
+            //备忘录输入改变
+            remarkEditor.target.textbox({
+                onChange: function (newValue, oldValue) {
+                    if (newValue != "undefined" && editProductList.length > 0) {
+                        editProductList[rowIndex].remark = newValue;
+                    }
+                }
+            });
+        },
+    });
+
+}
+编辑的事件绑定，税后价输入改变和退货数量改变
+
+
+
+function addProductDetail() {
+    var rows = $("#dg_productDetail").datagrid("getSelections"); // 获取所有选中的行
+    //TODO 等IMS有接口之后要获取stockReturn值在这里批量获取
+    var stockReturns = {"stockReturn": 122};
+    for (var i = 0; i < rows.length; i++) {
+        var skuNo = rows[i].skuNo;
+        var flag=true;
+        for(var index in addproductList){
+            if(addproductList[index].skuNo == skuNo){
+                flag=false;
+            }
+        }
+        if(flag){
+            if (rows[i].taxRate == undefined) {
+                rows[i].taxRate = 0;
+            }
+            if (rows[i].purchaseReturn == undefined) {
+                rows[i].purchaseReturn = "";
+            }
+            if (rows[i].afterTaxPrice == undefined) {
+                rows[i].afterTaxPrice = "";
+            }
+            if (rows[i].preTaxPrice == undefined) {
+                rows[i].preTaxPrice = "";
+            }
+            if (rows[i].remark == undefined) {
+                rows[i].remark = "";
+            }
+            //TODO 等stockReturns有真值之后要在这里赋值
+            if (rows[i].stockReturn == undefined) {
+                rows[i].stockReturn = stockReturns.stockReturn;
+            }
+            addproductList.push(rows[i]);
+        }
+
+    }
+    if (addproductList.length <= 0) {
+        $.messager.alert('提示', '请选择要添加的列!', "info");
+    } else {
+        $("#dg-data-add").datagrid({data: addproductList});
+        for (var i = 0; i < addproductList.length; i++) {
+            $('#dg-data-add').datagrid('beginEdit', i);
+        }
+        $("#dg_productDetail").datagrid('clearSelections');
+        $('#dlg_product_detail').dialog({'close': true});
+
+        var rows = $('#dg-data-add').datagrid('getRows');
+        for (var i = 0; i < rows.length; i++) {
+            //税前价不能输入不能修改
+            var preTaxPrice = $('#dg-data-add').datagrid('getEditors', i)[2].target;
+            preTaxPrice.numberbox("disable", true);
+        }
+    }
+}
+

@@ -1,0 +1,27 @@
+ $("#dg-data-add").datagrid({
+        columns: [columns],
+        idField: 'id',
+        width: '100%',
+        height: '100%',
+        nowrap: true,
+        singleSelect: false,
+        selectOnCheck: false,
+        checkOnSelect: true,
+        toolbar: '#productToolbar',
+        data: []
+ }
+
+  $("#dg-data-add").datagrid({
+        columns: [columns],
+        idField: 'skuNo',
+        width: '100%',
+        height: '100%',
+        nowrap: true,
+        singleSelect: false,
+        selectOnCheck: false,
+        checkOnSelect: true,
+        toolbar: '#productToolbar',
+        data: []
+ }
+采购功能：
+ 在编辑的时候，由于数据源是从采购数据里取，而添加货品的数据则是由货品详情吧表里取，在做判断的时候我抛弃了ID，使用的SkuNo，业务正常完成了。但是界面上datagrid getChecked的时候无法获取到正常的行，因为从货品详情里获取id的时候被我置空了idField产生了异常，所以的异常数据里只能获取到第一个，其他的获取全部失败了。更改idField属性为唯一的sku即可
