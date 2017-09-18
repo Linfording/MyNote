@@ -30,3 +30,8 @@ cp –r t1 t2			#复制t1目录为t2目录，形成第二个tomcat
 chown -R git:git gittest.git/ 给gittest.git及所有子目录赋予git角色权限 chown权限命令
 
 find / -name abc.txt #根目录下查找abc.txt名字的文件
+
+# tail -f stdout.log 
+# tail -1000f stdout.log 
+
+grep 'INFO' demo.log
