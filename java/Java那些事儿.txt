@@ -1,0 +1,55 @@
+Integer 对于-128 到 127之间的值会进行缓存，当赋值在-128到127之间时会直接将缓存好的Integer赋值过去，此时引用的都是同一块内存地址，通过==比较Integer可以得到true，超过127的则只能用equals比较
+
+String 
+String a="100";
+String b="100";
+String c=new String("100");
+在比较时用equalse
+
+equals是一个普通的方法，该方法返回的结果依赖于自身的实现。
+
+四类八种基本数据类型
+整型：byte，short，int，long
+浮点类型：float，double
+字符型：char
+逻辑型：boolean
+除掉这四类八种基本类型，其它的都是对象，也就是引用类型，包括数组。
+
+对于基本数据类型来说，赋值（=号）就相当于拷贝了一份值，把int1的值100，拷贝给int2，
+对于引用类型来说，赋值（=号）就相当于拷贝了一份内存地址
+
+==比较地址 基本类型的比较可以用==，引用类型判断是否相同用==则会对比地址
+equals 引用对象的值比较最好用这个
+
+自动拆箱装箱
+    源代码
+    Integer integer1=100
+    int int1=integer1
+    编译后
+    Integer integer1=Integer.valueOf(100);  //装箱
+    int int1=integer1.intValue();   //拆箱
+编译器会自动对基本类型和包装类进行拆箱装箱操作
+
+包装类的意义：
+1、对象是对现实世界的模拟，int的默认值是0，而Integer的默认值是null，null可以表达出比0更多的意义，0在一些场合会让人产生误解
+2、为泛型提供了支持。
+3、提供了丰富的属性和API
+Integer.MAX_VALUE
+Integer.MIN_VALUE
+Integer.max(int1,int2);
+Integer.min(int1,int2);
+Integer.sum(int1,int2);
+Integer.valueOf(String);
+Integer.compare(int1,int2);
+
+
+当我们在实际业务中需要重写（覆盖）equals方法时，根据规范，我们一定要重写（覆盖）hashCode方法。
+重写equals会让List.contains(Object)返回true
+但是set.contains(Object)返回依旧是false，重写了hashCode后才能得到想要的结果
+
+static修饰的变量，常驻于方法区，我们不需要new，JVM会提前给我们初始化好，这个特性在实际开发过程中，经常拿来做缓存。
+Integer的缓存就是最好的例子。static变量又叫类变量，不管该类有多少个对象，static的变量只有一份，独一无二。
+
+fianl修饰的变量，JVM也会提前给我们初始化好。
+
+transient这个关键字告诉我们该对象在序列化的时候请忽略这个元素

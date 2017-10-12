@@ -1,0 +1,52 @@
+1.debug 启动服务器上的服务
+1.1 停掉原有服务
+ps -ef | grep dubbo
+root     13585     1  2 10:44 ?        00:01:58 
+[root@iZ2348yor6lZ core]# kill -9 13585
+
+1.2 debug启动 
+cd /usr/local/yunji/core/oms/bin
+./start.sh debug
+
+1.3 查看远程端口
+ps -ef | grep dubbo
+root     17129     1 99 12:02 pts/0    00:00:30 xxxxxxx address=xxxxx,xxxxxxxxx
+
+address=xxxxx
+port：xxxxx
+
+1.4 查看IP
+ifconfig
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet xxxxxxx  netmask 255.255.252.0  broadcast 10.24.255.255
+        ether 00:16:3e:01:41:f8  txqueuelen 1000  (Ethernet)
+        RX packets 991235863  bytes 322272557854 (300.1 GiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 857671676  bytes 193821663257 (180.5 GiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet xxxxxxxx  netmask 255.255.252.0  broadcast 121.196.235.255
+        ether 00:16:3e:01:3f:61  txqueuelen 1000  (Ethernet)
+        RX packets 8529758  bytes 1257763002 (1.1 GiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 8572339  bytes 6793399894 (6.3 GiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        loop  txqueuelen 0  (Local Loopback)
+        RX packets 8504869  bytes 4299443915 (4.0 GiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 8504869  bytes 4299443915 (4.0 GiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+ip: xxxxxx
+
+2.idea 配置远程debug
+2.1 添加：Remote
+testDebug
+host：xxxxxxx
+port：xxxxx
+module classpath: omsbaseservice
+
