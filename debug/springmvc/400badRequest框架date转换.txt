@@ -1,0 +1,16 @@
+400 badRequest
+
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        //The date format to parse or output your dates
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        //Create a new CustomDateEditor
+        CustomDateEditor editor = new CustomDateEditor(dateFormat, true);
+        //Register it as custom editor for the Date type
+        binder.registerCustomEditor(Date.class, editor);
+
+    }
+
+date 请求参数问题
+ServletModelAttributeMethodProcessor

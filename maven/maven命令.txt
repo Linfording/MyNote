@@ -1,0 +1,6 @@
+maven 命令：
+mvn clean package -Dmaven.test.skip 清除
+
+mvn clean install -Dmaven.test.skip 打包
+
+explorer .  打开目录

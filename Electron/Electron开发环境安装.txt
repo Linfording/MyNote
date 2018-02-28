@@ -1,0 +1,28 @@
+1.安装node.js
+    https://nodejs.org/en/
+2.安装Electron
+    运行npm install命令来安装electron
+
+    npm install --g electron-prebuilt
+
+    但是网络问题导致报错
+
+    解决方法：
+        1.命令先安装淘宝镜像的包命令行管理工具cnpm,然后再安装
+        npm install cnpm -g --registry=http://registry.npm.taobao.org
+
+        2.安装
+        cnpm install electron -g
+
+4.Electron 发生错误 "Cannot find module app"
+    解决方式：
+
+    原代码长这样：
+        var app = require('app');
+        var BrowserWindow = require('browser-window');
+    修改成：
+        const electron = require('electron');
+        const app = electron.app;
+        const BrowserWindow = electron.BrowserWindow;
+    错误原因：
+        使用的Electron版本太新，这种API在 Electron v1.0.0 中被移除了。再出现 “Cannot find module ……” 的错误，基本上全是因为require直接引入模块了，其他模块的引入如果仿照还出错就得现查API了，并不是所有的都是 “const balabala = electron.balabala” 就可以解决的，比如ipc的引入就是：const ipc = electron.ipcMain;

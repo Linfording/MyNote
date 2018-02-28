@@ -1,0 +1,7 @@
+1.style增加position属性: 
+    值：relative;
+2.增加top/bottom/left/right属性
+    值：px;
+
+			<li style="position: relative;top: -3px"><a  href="javascript:removeOrderCostItem();" class="otherAddBtn">-</a></li>
+
