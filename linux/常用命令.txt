@@ -44,3 +44,9 @@ grep -10  PO201712120031 /usr/local/yunji/logs/omsbiz-service/stdout.log -n
 
 //-n x,yp 查看x,y行日志
 sed -n 529070,529090p /usr/local/yunji/logs/omsbiz-service/stdout.log   
+
+
+//linux ping 查看网络是否联通
+telnet ip port
+telnet 10.27.68.105 20088
+

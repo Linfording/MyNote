@@ -1,0 +1,27 @@
+import com.yunji.oms.settlement.service.SettlementStatisticsServiceImplTest;
+import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.io.File;
+
+/**
+ * wmq-admin
+ * TODO 简单描述类的作用.
+ *
+ * @author liudonghua
+ **/
+@ContextConfiguration({"classpath:META-INF/spring/*.xml"})
+@RunWith(SpringJUnit4ClassRunner.class)
+public abstract  class BaseTest {
+
+    @BeforeClass
+    public static void beforeClass(){
+        File f = new File(SettlementStatisticsServiceImplTest.class.getResource("/").getPath());
+        String systemConfigPath = f.getParentFile().getAbsolutePath().replace("\\","/");
+        systemConfigPath = systemConfigPath + "/classes/systemConfig";
+        System.setProperty("CONFIG_ENV", "local");
+        System.setProperty("systemConfigPath", systemConfigPath);
+    }
+}
